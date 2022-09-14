@@ -15,10 +15,18 @@ export interface User {
 
 export interface Booking {
     id: string;
-    startDate: string;
-    endDate: string;
+    startDate: Date;
+    endDate: Date;
     createdAt: Date;
     updatedAt: Date;
     cabin: Cabin;
     user: User;
 }
+
+export interface BookingRequest {
+    cabinId: string;
+    startDate: Date;
+    endDate: Date;
+    userId: string;
+    password: string;
+};

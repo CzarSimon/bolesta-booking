@@ -1,7 +1,9 @@
 import { User } from "../models";
 import { now } from "../timeutil";
+import { Optional } from "../types";
 
 export interface UserRepository {
+    find(id: string): Optional<User>;
     findAll(): User[]
 }
 
@@ -32,6 +34,10 @@ class DummyUserRepository implements UserRepository {
         users.forEach(user => {
             this.users[user.id] = user;
         });
+    }
+
+    public find(id: string): Optional<User> {
+        return this.users[id];
     }
 
     public findAll(): User[] {

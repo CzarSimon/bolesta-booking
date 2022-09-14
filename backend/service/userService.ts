@@ -1,5 +1,6 @@
 import { User } from "../models";
 import { UserRepository } from "../repository";
+import { Optional } from "../types";
 
 export class UserService {
     userRepository: UserRepository
@@ -10,5 +11,9 @@ export class UserService {
 
     public listUsers(): User[] {
         return this.userRepository.findAll();
+    }
+
+    public getUser(id: string): Optional<User> {
+        return this.userRepository.find(id);
     }
 }

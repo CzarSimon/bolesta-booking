@@ -1,0 +1,40 @@
+import { Request, Response } from 'express';
+import { METHOD, StatusOK } from '../constants';
+import { Server } from '../httputil/server';
+import { BookingRequest } from '../models';
+import { BookingService } from '../service';
+
+export class BookingController {
+    private service: BookingService;
+    
+    constructor(service: BookingService) {
+        this.service = service;
+    }
+
+    public attach(server: Server): void {
+        server.register(METHOD.GET, "/v1/bookings", this.listBookins);
+        server.register(METHOD.POST, "/v1/bookings", this.createBooking);
+    }
+
+    private listBookins = (req: Request, res: Response): void => {
+        const bookings = this.service.listBookings();
+        res.status(StatusOK).json(bookings);
+    }
+
+    private createBooking = (req: Request, res: Response): void => {
+        const bookingRequest = parseBookingRequest(req);
+        const booking = this.service.createBooking(bookingRequest);
+        res.status(StatusOK).json(booking);
+    }
+}
+
+function parseBookingRequest(req: Request): BookingRequest {
+    const { cabinId, userId, startDate, endDate, password } = req.body;
+    return {
+        cabinId,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        userId,
+        password,
+    }
+}

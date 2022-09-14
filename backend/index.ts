@@ -1,12 +1,12 @@
-import { CabinController, UserController, Controller } from './controller';
-import { BookingController } from './controller/bookingController';
+import { CabinController, UserController, BookingController, Controller } from './controller';
 import { Server } from './httputil/server';
-import { newBookingRepository, newCabinRepository, newUserRepository } from './repository';
+import { CabinRepository, newBookingRepository, newCabinRepository, newUserRepository } from './repository';
 import { BookingService, CabinService, UserService } from './service';
 
-const cabinService: CabinService = new CabinService(newCabinRepository()); 
+const cabinRepository: CabinRepository = newCabinRepository();
+const cabinService: CabinService = new CabinService(cabinRepository); 
 const userService: UserService = new UserService(newUserRepository());
-const bookingService: BookingService = new BookingService(newBookingRepository());
+const bookingService: BookingService = new BookingService(newBookingRepository(), cabinRepository, userService);
 
 const controllers: Controller[] = [
     new CabinController(cabinService),

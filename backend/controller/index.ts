@@ -6,3 +6,4 @@ export interface Controller {
 
 export { CabinController } from './cabinController';
 export { UserController } from './userController';
+export { BookingController } from './bookingController';
