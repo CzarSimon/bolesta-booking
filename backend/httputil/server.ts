@@ -34,15 +34,18 @@ export class Server {
         switch (method) {
             case METHOD.GET: {
                 this.app.get(path, handler);
+                break;
             }
             case METHOD.POST: {
                 this.app.post(path, handler);
+                break;
             }
             case METHOD.DELETE: {
                 this.app.delete(path, handler);
+                break;
             }
             default: {
-                console.error(`Failed to register handler. Unsupported method: ${method}`);
+                throw new Error(`Failed to register handler. Unsupported method: ${method}`);
             }
         }
     }

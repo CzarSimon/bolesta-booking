@@ -1,0 +1,1 @@
+export { CabinService } from './cabinService';
