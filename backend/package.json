@@ -1,0 +1,19 @@
+{
+  "name": "@bolesta-booking/backend",
+  "version": "1.0.0",
+  "description": "Backend for Bölesta Booking",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CzarSimon/bolesta-booking.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CzarSimon/bolesta-booking/issues"
+  },
+  "homepage": "https://github.com/CzarSimon/bolesta-booking#readme"
+}
