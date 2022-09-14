@@ -1,6 +1,6 @@
 import { Cabin } from "../models";
 import { Optional } from "../types";
-import { CabinRepository } from "../repository/cabinRepository";
+import { CabinRepository } from "../repository";
 
 export class CabinService {
     cabinRepository: CabinRepository
