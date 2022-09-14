@@ -5,3 +5,4 @@ export interface Controller {
 }
 
 export { CabinController } from './cabinController';
+export { UserController } from './userController';
