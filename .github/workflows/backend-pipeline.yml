@@ -15,16 +15,15 @@ jobs:
     name: parse-version
     runs-on: ubuntu-latest
     outputs:
-      package-name: ${{ steps.parse.outputs.package-name }}
+      full-version: ${{ steps.parse.outputs.full-version }}
     steps:
       - uses: actions/checkout@v2
       - id: parse
         name: Parse version info
         run: |
-          NAME=$(cat package.json | jq .name --raw-output)
           VERSION=$(cat package.json | jq .version --raw-output)
           COMMIT_ID=${GITHUB_SHA:0:7}
-          echo "::set-output name=package-name::$NAME:$VERSION-$COMMIT_ID"
+          echo "::set-output name=full-version::$VERSION-$COMMIT_ID"
   
   run-tests:
     name: Run tests
@@ -67,12 +66,12 @@ jobs:
       - name: Docker build
         run: |
           echo "Package version: ${{needs.parse-version.outputs.package-name}}"
-          docker build -t ghcr.io/czarsimon/tactics-trainer/${{needs.parse-version.outputs.package-name}} .
+          docker build -t ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.full-version}} .
       - name: Run Trivy vulnerability scanner on image
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "image"
-          image-ref: "ghcr.io/czarsimon/tactics-trainer/${{needs.parse-version.outputs.package-name}}"
+          image-ref: "ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.full-version}}"
           ignore-unfixed: true
           format: "table"
           exit-code: "1"
