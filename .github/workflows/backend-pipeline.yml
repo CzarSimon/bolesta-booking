@@ -57,6 +57,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs:
       - parse-version
+      - run-tests
       - security-scans
     runs-on: ubuntu-latest
     steps:
@@ -67,7 +68,7 @@ jobs:
         run: |
           echo "Package version: ${{needs.parse-version.outputs.package-name}}"
           docker build \
-            -t ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.version}} \
+            -t ghcr.io/czarsimon/bolesta-booking/backend:${{needs.parse-version.outputs.version}} \
             --label git-commit="$(git rev-parse HEAD)" \
             --label build-date="$(date -u)" \
             --label commiter-name="$(git show -s --format='%an')" \
@@ -77,11 +78,11 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "image"
-          image-ref: "ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.version}}"
+          image-ref: "ghcr.io/czarsimon/bolesta-booking/backend:${{needs.parse-version.outputs.version}}"
           ignore-unfixed: true
           format: "table"
           exit-code: "1"
       - name: Docker push
         run: |
           docker login https://ghcr.io --username $GITHUB_ACTOR --password ${{ secrets.GITHUB_TOKEN }}
-          docker push ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.version}}
+          docker push ghcr.io/czarsimon/bolesta-booking/backend:${{needs.parse-version.outputs.version}}
