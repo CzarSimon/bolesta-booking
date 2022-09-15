@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { Booking, BookingRequest, Cabin, User } from "../models";
+import { Booking, BookingFilter, BookingRequest, Cabin, User } from "../models";
 import { BookingRepository, CabinRepository } from "../repository";
 import { now } from '../timeutil';
 import { UserService } from "./userService";
@@ -15,8 +15,12 @@ export class BookingService {
         this.userService = userService;
     }
 
-    public listBookings(): Booking[] {
-        return this.bookingRepository.findAll();
+    public listBookings(filter: BookingFilter): Booking[] {
+        const { cabinId, userId } = filter;
+
+        return this.bookingRepository.findAll()
+            .filter(booking => !cabinId || cabinId === booking.cabin.id)
+            .filter(booking => !userId || userId === booking.user.id)
     }
 
     public createBooking(req: BookingRequest): Booking {

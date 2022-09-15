@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { METHOD, StatusOK } from '../constants';
 import { Server } from '../httputil/server';
-import { BookingRequest } from '../models';
+import { BookingFilter, BookingRequest } from '../models';
 import { BookingService } from '../service';
 
 export class BookingController {
@@ -16,8 +16,9 @@ export class BookingController {
         server.register(METHOD.POST, "/v1/bookings", this.createBooking);
     }
 
-    private listBookins = (req: Request, res: Response): void => {
-        const bookings = this.service.listBookings();
+    private listBookins = (req: Request<{}, {}, {}, BookingFilter>, res: Response): void => {
+        const { cabinId, userId } = req.query;
+        const bookings = this.service.listBookings({ cabinId, userId });
         res.status(StatusOK).json(bookings);
     }
 

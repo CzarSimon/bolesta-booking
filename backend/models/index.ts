@@ -30,3 +30,8 @@ export interface BookingRequest {
     userId: string;
     password: string;
 };
+
+export interface BookingFilter {
+    cabinId?: string;
+    userId?: string;
+}
