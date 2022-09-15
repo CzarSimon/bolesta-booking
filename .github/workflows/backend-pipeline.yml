@@ -1,0 +1,78 @@
+name: backend-pipeline
+
+defaults:
+  run:
+    working-directory: backend
+
+on:
+  push:
+    paths:
+      - backend/**
+      - .github/workflows/backend-pipeline.yml
+
+jobs:
+  parse-version:
+    name: parse-version
+    runs-on: ubuntu-latest
+    outputs:
+      package-name: ${{ steps.parse.outputs.package-name }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: parse
+        name: Parse version info
+        run: |
+          NAME=$(cat package.json | jq .name --raw-output)
+          VERSION=$(cat package.json | jq .version --raw-output)
+          COMMIT_ID=${GITHUB_SHA:0:7}
+          echo "::set-output name=package-name::$NAME:$VERSION-$COMMIT_ID"
+  
+  run-tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.17.0
+      - run: npm ci
+
+  security-scans:
+    name: security-scans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Scan dependencies
+        run: npm audit --omit=dev
+      - name: Scan configuration
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "config"
+          format: "table"
+          exit-code: "1"
+          scan-ref: "backend"
+          hide-progress: false
+          ignore-unfixed: true
+
+  build-image:
+    name: build-image
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - parse-version
+      - security-scans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+      - name: Docker build
+        run: |
+          echo "Package version: ${{needs.parse-version.outputs.package-name}}"
+          docker build -t ghcr.io/czarsimon/tactics-trainer/${{needs.parse-version.outputs.package-name}} .
+      - name: Run Trivy vulnerability scanner on image
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "image"
+          image-ref: "ghcr.io/czarsimon/tactics-trainer/${{needs.parse-version.outputs.package-name}}"
+          ignore-unfixed: true
+          format: "table"
+          exit-code: "1"
