@@ -15,7 +15,7 @@ jobs:
     name: parse-version
     runs-on: ubuntu-latest
     outputs:
-      full-version: ${{ steps.parse.outputs.full-version }}
+      version: ${{ steps.parse.outputs.version }}
     steps:
       - uses: actions/checkout@v2
       - id: parse
@@ -23,7 +23,7 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq .version --raw-output)
           COMMIT_ID=${GITHUB_SHA:0:7}
-          echo "::set-output name=full-version::$VERSION-$COMMIT_ID"
+          echo "::set-output name=version::$VERSION"
   
   run-tests:
     name: Run tests
@@ -66,12 +66,22 @@ jobs:
       - name: Docker build
         run: |
           echo "Package version: ${{needs.parse-version.outputs.package-name}}"
-          docker build -t ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.full-version}} .
+          docker build \
+            -t ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.version}} \
+            --label git-commit="$(git rev-parse HEAD)" \
+            --label build-date="$(date -u)" \
+            --label commiter-name="$(git show -s --format='%an')" \
+            --label commiter-email="$(git show -s --format='%ae')" \
+            .
       - name: Run Trivy vulnerability scanner on image
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "image"
-          image-ref: "ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.full-version}}"
+          image-ref: "ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.version}}"
           ignore-unfixed: true
           format: "table"
           exit-code: "1"
+      - name: Docker push
+        run: |
+          docker login https://ghcr.io --username $GITHUB_ACTOR --password ${{ secrets.GITHUB_TOKEN }}
+          docker push ghcr.io/czarsimon/bolesta-booking/backend/${{needs.parse-version.outputs.version}}
