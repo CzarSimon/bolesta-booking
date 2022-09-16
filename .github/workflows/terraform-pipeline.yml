@@ -10,8 +10,9 @@ on:
       - infrastructure/terraform/**
       - .github/workflows/terraform-pipeline.yml
 
-  security-scans:
-    name: security-scans
+jobs:
+  scan-and-test:
+    name: scan-and-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,6 +27,8 @@ on:
           ignore-unfixed: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
-      - name: Run terraform fmt check
+      - name: fmt check
         run: terraform fmt -check
+      - name: validation
+        run: terraform validate -no-color
 
