@@ -1,0 +1,31 @@
+name: terraform-pipeline
+
+defaults:
+  run:
+    working-directory: infrastructure/terraform
+
+on:
+  push:
+    paths:
+      - infrastructure/terraform/**
+      - .github/workflows/terraform-pipeline.yml
+
+  security-scans:
+    name: security-scans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Scan configuration
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "config"
+          format: "table"
+          exit-code: "1"
+          scan-ref: "infrastructure/terraform"
+          hide-progress: false
+          ignore-unfixed: true
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Run terraform fmt check
+        run: terraform fmt -check
+
