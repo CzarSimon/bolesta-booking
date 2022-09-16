@@ -40,28 +40,28 @@ resource "scaleway_instance_security_group" "server_sg" {
   outbound_default_policy = "accept"
 
   inbound_rule {
-    action     = "accept"
-    protocol   = "TCP"
-    port = "22"
+    action   = "accept"
+    protocol = "TCP"
+    port     = "22"
   }
 
   inbound_rule {
-    action     = "accept"
-    protocol   = "TCP"
-    port = "80"
+    action   = "accept"
+    protocol = "TCP"
+    port     = "80"
   }
 
   inbound_rule {
-    action     = "accept"
-    protocol   = "TCP"
-    port = "443"
+    action   = "accept"
+    protocol = "TCP"
+    port     = "443"
   }
 }
 
 resource "scaleway_instance_server" "server" {
-  name = "main-server"
-  type = "DEV1-S"
-  image = "ubuntu_focal"
-  ip_id = scaleway_instance_ip.server_ip.id
+  name              = "main-server"
+  type              = "DEV1-S"
+  image             = "ubuntu_focal"
+  ip_id             = scaleway_instance_ip.server_ip.id
   security_group_id = scaleway_instance_security_group.server_sg.id
 }
