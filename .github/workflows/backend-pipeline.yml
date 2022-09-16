@@ -22,7 +22,6 @@ jobs:
         name: Parse version info
         run: |
           VERSION=$(cat package.json | jq .version --raw-output)
-          COMMIT_ID=${GITHUB_SHA:0:7}
           echo "::set-output name=version::$VERSION"
   
   run-tests:

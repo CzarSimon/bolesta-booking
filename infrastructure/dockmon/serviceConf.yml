@@ -1,0 +1,10 @@
+- serviceName: backend
+  livenessUrl: http://backend:8080/health
+  livenessInterval: 20
+  restart: true
+  failAfter: 3
+- serviceName: httplogger
+  livenessUrl: http://httplogger:8080/health
+  livenessInterval: 20
+  restart: true
+  failAfter: 3
