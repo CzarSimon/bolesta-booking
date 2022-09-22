@@ -1,0 +1,59 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+groups:
+  - docker
+
+packages:
+  - nginx
+  - docker.io
+  - unattended-upgrades
+
+users:
+  - name: simon
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC+t4bln4wYS7FOy1gN5iegJ9tMTe74BiveSGprcMp40j5/aDjXRUfEwrOMS6HArgjpcEHqj1kXCn9Oj5P9jzIOjmSTub693M2esZrtfwTSO6vLYWV3hzm+0B4h7Vki2hRs8T9dbBgdj6MoTIGfykWadcbDGHQD/Hc0NehdIiUzLnLIA3v+zTcfTC8aBRN7MjiBjSd+APRsDkK9WElhVQiNgLaSmmnTvDLFDqf9MT3T33UXaTDcRc9mUq/gwpqngntnK4wE0e5yGcxyeqVw6f88yZKlz2mEDOm1jM0YO50te5lMo4L8lV3LL+mtQdnOfk/tDicM+XONczq+IVRKZDob7xTzKbC06dAD6nnlOOoJRXnGpwj0KyCqmcSg+CxfAKIXnTBWxts1kQMGwfxomNbhgohALbCP5WKGWBU5fZd07GlMOKbGU8OMNcatI/LCMWF1qRHgPpWIM92Kchrho7gHQNF0WIzwDKI8QFBxef4qaHu2fwRB4sgG5kV8y+17jwJJkl8GIUydv7656K9lBNt/UQDv8I4LTPvYj+37DgzlvJjfWbUyuQIW4hiCHvJsOQsiYHgSrpFGOtFsqpjXiTUQkCtt1o2jFMcj+HaKO+x7vLp9BelaVtJrr5inYx6WwfvJUR4h0BPqFpTOjU8RJd63jmU+jBMBlsNEDC9ozm4s/w== simonlindgren@Simons-MacBook-Air.local
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    groups: sudo, docker
+    shell: /bin/bash
+  - name: cicd
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDfE9citu922FUowC/C1Y0I8LQ8/FmiXIv6fno92jZ0ugjnWxTKi3Tf6kYe1OMm9egStd0oZ77VePMTtQIRFNdDUtEKoqFauO56Ypvvk6maxvc3uNFhTDEv/00PtKbMiu/IdOJyVqptp9HXVO1LaORzOdBz0sycjbcKu1zCndSrL59BiFuSVPjBTz0cOhKspgd0zoekrZSUsFBc9vej2XT7pr0ZL5xIDmT+dJHs/n7jE6427enISFAiKBMVRIcK4GcDiBGl3ef6I2jfSAFefDyphGAUG8GVi9eXezUWZ9DVVA12AYaPP6J5KhGl5xb0gvnMUxrwyFlPnG+uxyupXAGAsTp+9GziLgDr7ICsDccZqMrQ46FZFXp4Ijo/jzFuTGXA87zZmfKU9/9/4N2ZO3dX6WRTMRenWTU+kJQlLaU4wHifeY1T9qHePNVZkp8NNNC+h2YAmAbPuqIIAv+0/L45U/22JkyhHDpbDZjlYOkcbFyIKs+8pUjtdWACWzTvabE= simonlindgren@Simons-Air.lan
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    groups: sudo, docker
+    shell: /bin/bash
+
+write_files:
+  - owner: root:root
+    path: /etc/nginx/sites-available/default 
+    content: |
+      server {
+        server_name booking.xn--blesta-wxa.se;
+
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+        index index.html index.htm index.nginx-debian.html;
+
+        location / {
+          try_files $uri $uri/ =404;
+        }
+      }
+  - owner: root:root
+    path: /etc/cron.d/letsencrypt_renew
+    content: "5 4 * * * /usr/bin/certbot renew --quiet"
+
+runcmd:
+  - sed -i -e '/^#PermitRootLogin/s/^.*$/PermitRootLogin no/' /etc/ssh/sshd_config
+  - sed -i -e '$aAllowUsers simon cicd' /etc/ssh/sshd_config
+  - systemctl restart ssh
+  # install certbot
+  - sudo snap install --classic certbot
+  # wait for booking domain to be ready
+  - while true; do nslookup booking.xn--blesta-wxa.se; if [ $? -eq 0 ]; then echo "domain ready"; break; else echo "domain not yet ready"; sleep 10; fi; done
+  # issue tls cert and restart nginx
+  - certbot --nginx -n -d booking.xn--blesta-wxa.se --email tech@xn--blesta-wxa.se --agree-tos --redirect --hsts
+  - systemctl restart nginx
+

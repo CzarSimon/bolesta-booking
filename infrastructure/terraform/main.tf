@@ -35,6 +35,14 @@ resource "scaleway_object_bucket_website_configuration" "frontend_website" {
 
 resource "scaleway_instance_ip" "server_ip" {}
 
+resource "scaleway_domain_record" "booking_A_record" {
+  dns_zone = "xn--blesta-wxa.se"
+  name     = "booking"
+  type     = "A"
+  data     = scaleway_instance_ip.server_ip.address
+  ttl      = 300
+}
+
 resource "scaleway_instance_security_group" "server_sg" {
   inbound_default_policy  = "drop"
   outbound_default_policy = "accept"
@@ -64,4 +72,8 @@ resource "scaleway_instance_server" "server" {
   image             = "ubuntu_focal"
   ip_id             = scaleway_instance_ip.server_ip.id
   security_group_id = scaleway_instance_security_group.server_sg.id
+
+  user_data = {
+    cloud-init = file("${path.module}/cloud-init.yml")
+  }
 }

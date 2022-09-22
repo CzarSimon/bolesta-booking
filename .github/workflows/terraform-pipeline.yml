@@ -10,6 +10,11 @@ on:
       - infrastructure/terraform/**
       - .github/workflows/terraform-pipeline.yml
 
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+  AWS_DEFAULT_REGION: fr-par
+
 jobs:
   scan-and-test:
     name: scan-and-test
@@ -27,6 +32,8 @@ jobs:
           ignore-unfixed: true
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+      - name: init terraform
+        run: terraform init
       - name: fmt check
         run: terraform fmt -check
       - name: validation
