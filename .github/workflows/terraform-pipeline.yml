@@ -39,3 +39,15 @@ jobs:
       - name: validation
         run: terraform validate -no-color
 
+  deploy:
+    name: deploy
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - scan-and-test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - run: terraform init
+      - run: terraform apply -auto-approve
+
