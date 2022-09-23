@@ -39,7 +39,7 @@ jobs:
       - name: upload compose file
         uses: burnett01/rsync-deployments@5.2.1
         with:
-          path: "./docker-compose.yml"
+          path: "./infrastructure/docker-compose.yml"
           remote_path: /home/cicd
           remote_host: ${{ env.SERVER_HOST }}
           remote_user: cicd
@@ -47,7 +47,7 @@ jobs:
       - name: upload nginx config
         uses: burnett01/rsync-deployments@5.2.1
         with:
-          path: "./nginx.conf"
+          path: "./infrastructure/nginx.conf"
           remote_path: /home/cicd
           remote_host: ${{ env.SERVER_HOST }}
           remote_user: cicd
