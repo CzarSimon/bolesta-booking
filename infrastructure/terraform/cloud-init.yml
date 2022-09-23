@@ -9,6 +9,7 @@ packages:
   - nginx
   - docker.io
   - unattended-upgrades
+  - docker-compose-plugin
 
 users:
   - name: simon
@@ -56,4 +57,6 @@ runcmd:
   # issue tls cert and restart nginx
   - certbot --nginx -n -d booking.xn--blesta-wxa.se --email tech@xn--blesta-wxa.se --agree-tos --redirect --hsts
   - systemctl restart nginx
+  - mkdir /etc/bolesta-booking
+  - mkdir /etc/bolesta-booking/backup
 
