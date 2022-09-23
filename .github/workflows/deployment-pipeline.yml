@@ -18,15 +18,15 @@ jobs:
   security-scan:
     name: security-scan
     runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v2
-        - name: setup trivy
-          run: |
-            wget https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.deb
-            dpkg -i trivy_0.18.3_Linux-64bit.deb
-        - name: scan deployment images
-          run: |
-            for IMAGE in $(cat docker-compose.yml | grep 'image: ' | awk '{print $NF}'); do trivy image $IMAGE --ignore-unfixed; done; 
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup trivy
+        run: |
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.deb
+          dpkg -i trivy_0.18.3_Linux-64bit.deb
+      - name: scan deployment images
+        run: |
+          for IMAGE in $(cat docker-compose.yml | grep 'image: ' | awk '{print $NF}'); do trivy image $IMAGE --ignore-unfixed; done; 
 
   rsync-deployment-files:
     name: rsync-deployment-files
