@@ -1,0 +1,52 @@
+name: terraform-pipeline
+
+defaults:
+  run:
+    working-directory: infrastructure
+
+on:
+  push:
+    paths:
+      - infrastructure/docker-compose.yml
+      - infrastructure/nginx.conf
+      - .github/workflows/deployment-pipeline.yml
+
+env:
+  SERVER_HOST: booking.xn--blesta-wxa.se
+
+jobs:
+  security-scan:
+    name: security-scan
+    runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        - name: setup trivy
+          run: |
+            wget https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.deb
+            dpkg -i trivy_0.18.3_Linux-64bit.deb
+        - name: scan deployment images
+          run: |
+            for IMAGE in $(cat docker-compose.yml | grep 'image: ' | awk '{print $NF}'); do trivy image $IMAGE --ignore-unfixed; done; 
+
+  rsync-deployment-files:
+    name: rsync-deployment-files
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs:
+      - security-scan
+    steps:
+      - uses: actions/checkout@v2
+      - name: upload compose file
+        uses: burnett01/rsync-deployments@5.2.1
+          path: ./docker-compose.yml
+          remote_path: /home/cicd
+          remote_host: ${{ env.SERVER_HOST }}
+          remote_user: cicd
+          remote_key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
+      - name: upload nginx config
+        uses: burnett01/rsync-deployments@5.2.1
+          path: ./nginx.conf
+          remote_path: /home/cicd
+          remote_host: ${{ env.SERVER_HOST }}
+          remote_user: cicd
+          remote_key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}

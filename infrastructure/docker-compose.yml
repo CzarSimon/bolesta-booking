@@ -9,9 +9,11 @@ services:
     image: ghcr.io/czarsimon/bolesta-booking/backend:1.0.0
     networks:
       - application-network
+    ports:
+      - "8080:8080"
 
   httplogger:
-    image: czarsimon/httplogger:0.8
+    image: czarsimon/httplogger:1.0.0
     environment:
       JAEGER_DISABLED: "true"
     networks:
