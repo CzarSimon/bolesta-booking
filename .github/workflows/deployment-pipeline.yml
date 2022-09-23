@@ -38,6 +38,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: upload compose file
         uses: burnett01/rsync-deployments@5.2.1
+        with:
           path: "./docker-compose.yml"
           remote_path: /home/cicd
           remote_host: ${{ env.SERVER_HOST }}
@@ -45,6 +46,7 @@ jobs:
           remote_key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
       - name: upload nginx config
         uses: burnett01/rsync-deployments@5.2.1
+        with:
           path: "./nginx.conf"
           remote_path: /home/cicd
           remote_host: ${{ env.SERVER_HOST }}
