@@ -1,5 +1,6 @@
 import express, { Express, Response } from 'express';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 import { APP_NAME, PORT, METHOD, StatusOK, StatusServiceUnavailable } from '../constants';
 import { HTTPMethod, RequestHandler, HealthCheck } from '../types';
 import { sendOK } from './response';
@@ -18,6 +19,7 @@ export class Server {
     public constructor(opts?: ServerOptions) {
         this.app = express();
         this.app.use(bodyParser.json());
+        this.app.use(cors());
         this.port = opts?.port || PORT;
         const healthCheck = opts?.healthCheck || defaultHealthCheck;
 
