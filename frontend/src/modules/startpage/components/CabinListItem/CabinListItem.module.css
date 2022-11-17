@@ -1,0 +1,9 @@
+.CabinListItem {
+    border-radius: 20px;
+    padding: 10px;
+    background-color: #386641;
+    margin-bottom: 20px;
+    text-align: left;
+    text-indent: 20px;
+    color: whitesmoke;
+}

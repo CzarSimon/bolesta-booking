@@ -1,0 +1,14 @@
+.StartPage {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.ListTitle {
+    text-align: left;
+    text-decoration: underline; 
+}
+
+.CabinList {
+    list-style-type: none;
+    padding: 0;
+}
