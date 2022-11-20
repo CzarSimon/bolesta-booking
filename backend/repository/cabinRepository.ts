@@ -1,50 +1,50 @@
+import { Database } from "../dbutil";
 import { Cabin } from "../models";
-import { now } from "../timeutil";
 import { Optional } from "../types";
 
 export interface CabinRepository {
-  find(id: string): Optional<Cabin>;
-  findAll(): Cabin[];
+  find(id: string): Promise<Optional<Cabin>>;
+  findAll(): Promise<Cabin[]>;
 }
 
-export function newCabinRepository() {
-  return new DummyCabinRepository([
-    {
-      id: "a4b4f496-767e-423e-9816-83b71e1cfa89",
-      name: "Bölestastugan",
-      createdAt: now(),
-      updatedAt: now(),
-    },
-    {
-      id: "63e71fef-0037-451f-b731-27249c0164d9",
-      name: "Gulhuset",
-      createdAt: now(),
-      updatedAt: now(),
-    },
-    {
-      id: "2aa15162-2443-48f1-9b8f-6314f90faf9a",
-      name: "Bergebo",
-      createdAt: now(),
-      updatedAt: now(),
-    },
-  ]);
+export function newCabinRepository(db: Database) {
+  return new SQLiteCabinRepository(db);
 }
 
-class DummyCabinRepository implements CabinRepository {
-  cabins: Record<string, Cabin>;
+class SQLiteCabinRepository implements CabinRepository {
+  db: Database;
 
-  constructor(cabins: Cabin[]) {
-    this.cabins = {};
-    cabins.forEach((cabin) => {
-      this.cabins[cabin.id] = cabin;
-    });
+  constructor(db: Database) {
+    this.db = db;
   }
 
-  public find(id: string): Optional<Cabin> {
-    return this.cabins[id];
+  public async find(id: string): Promise<Optional<Cabin>> {
+    const res = await this.db.queryOne<string>(
+      "SELECT id, name, created_at, updated_at FROM cabin WHERE id = ?",
+      id
+    );
+
+    if (!res) {
+      return undefined;
+    }
+
+    return parseCabin(res);
   }
 
-  public findAll(): Cabin[] {
-    return Object.values(this.cabins);
+  public async findAll(): Promise<Cabin[]> {
+    const res = await this.db.queryAll(
+      "SELECT id, name, created_at, updated_at FROM cabin"
+    );
+
+    return res.map((row) => parseCabin(row));
   }
+}
+
+function parseCabin(row: any): Cabin {
+  return {
+    id: row.id,
+    name: row.name,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
 }
