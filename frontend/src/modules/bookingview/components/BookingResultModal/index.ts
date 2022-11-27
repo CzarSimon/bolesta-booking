@@ -1,0 +1,1 @@
+export { BookingResultModal } from "./BookingResultModal";

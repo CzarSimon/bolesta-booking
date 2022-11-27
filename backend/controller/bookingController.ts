@@ -25,11 +25,11 @@ export class BookingController {
     res.status(StatusOK).json(bookings);
   };
 
-  private async createBooking(req: Request, res: Response) {
+  private createBooking = async (req: Request, res: Response) => {
     const bookingRequest = parseBookingRequest(req);
     const booking = await this.service.createBooking(bookingRequest);
     res.status(StatusOK).json(booking);
-  }
+  };
 }
 
 function parseBookingRequest(req: Request): BookingRequest {

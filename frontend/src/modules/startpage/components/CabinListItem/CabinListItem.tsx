@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Cabin } from "../../../../types";
 
 import styles from "./CabinListItem.module.css";
@@ -8,8 +9,9 @@ interface Props {
 }
 
 export function CabinListItem({ cabin }: Props) {
+  const navigate = useNavigate();
   const select = () => {
-    alert(`You selected ${cabin.name}`);
+    navigate(`cabins/${cabin.id}`);
   };
 
   return (
