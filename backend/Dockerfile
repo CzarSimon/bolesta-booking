@@ -1,24 +1,31 @@
-FROM node:16.17.0-alpine3.16 AS build
+FROM golang:1.19-bullseye AS build
 
 # Copy source
-WORKDIR /app/backend
-COPY . .
+WORKDIR /app/bolesta-booking/backend
+COPY go.mod .
+COPY go.sum .
 
-# Download application dependencies 
-RUN npm ci
+# Download dependencies application
+RUN go mod download
 
-# Build application
-RUN npm run build
+# Build application.
+COPY cmd/server cmd
+COPY internal internal
+COPY resources resources
+WORKDIR /app/bolesta-booking/backend/cmd
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o server
 
-FROM node:16.17.0-alpine3.16 AS runtime
+FROM gcr.io/distroless/base-debian11 AS runtime
 
+# Copy migrations
+WORKDIR /etc/bolesta-booking/backend/migrations
+COPY ./resources/db/ .
+
+# Copy binary from buid step
 WORKDIR /opt/app
-COPY package.json package.json
-COPY package-lock.json package-lock.json
+COPY --from=build /app/bolesta-booking/backend/cmd/server server
 
-RUN npm ci --production
-
-COPY --from=build /app/backend/bin bin
-
-USER node
-CMD ["npm", "start"]
+# Prepare runtime
+USER nonroot:nonroot
+ENV GIN_MODE release
+CMD ["./server"]

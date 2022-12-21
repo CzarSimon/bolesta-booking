@@ -23,24 +23,32 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq .version --raw-output)
           echo "::set-output name=version::$VERSION"
-  
+
   run-tests:
-    name: Run tests
+    name: run-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v1
         with:
-          node-version: 16.17.0
-      - run: npm ci
+          go-version: 1.19
+      - uses: actions/checkout@v2
+      - name: Get dependencies
+        run: go mod download
+      - name: Check code style
+        run: go vet ./...
+      - name: Test
+        run: go test ./...
 
   security-scans:
     name: security-scans
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Scan dependencies
-        run: npm audit --omit=dev
+      - name: Scan code
+        run: |
+          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.14.0
+          $(go env GOPATH)/bin/gosec ./...
       - name: Scan configuration
         uses: aquasecurity/trivy-action@master
         with:
@@ -50,6 +58,8 @@ jobs:
           scan-ref: "backend"
           hide-progress: false
           ignore-unfixed: true
+        env:
+          TRIVY_IGNOREFILE: "backend/.trivyignore"
 
   build-image:
     name: build-image
