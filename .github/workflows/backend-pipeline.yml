@@ -83,14 +83,6 @@ jobs:
             --label commiter-name="$(git show -s --format='%an')" \
             --label commiter-email="$(git show -s --format='%ae')" \
             .
-      - name: Run Trivy vulnerability scanner on image
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "image"
-          image-ref: "ghcr.io/czarsimon/bolesta-booking/backend:${{needs.parse-version.outputs.version}}"
-          ignore-unfixed: true
-          format: "table"
-          exit-code: "1"
       - name: Docker push
         run: |
           docker login https://ghcr.io --username $GITHUB_ACTOR --password ${{ secrets.GITHUB_TOKEN }}
