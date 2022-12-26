@@ -15,7 +15,10 @@ COPY resources resources
 WORKDIR /app/bolesta-booking/backend/cmd
 RUN go build -o server
 
-FROM gcr.io/distroless/base-debian11 AS runtime
+FROM debian:bullseye-slim AS runtime
+
+# Prepare runtime user
+RUN useradd -ms /bin/bash nonroot
 
 # Copy migrations
 WORKDIR /etc/bolesta-booking/backend/db
@@ -26,6 +29,7 @@ WORKDIR /opt/app
 COPY --from=build /app/bolesta-booking/backend/cmd/server server
 
 # Prepare runtime
-USER nonroot:nonroot
+RUN mkdir /var/bolesta-booking && chown nonroot /var/bolesta-booking
+USER nonroot
 ENV GIN_MODE release
 CMD ["./server"]
