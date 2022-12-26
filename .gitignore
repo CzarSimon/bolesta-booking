@@ -102,3 +102,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Backend binary and db
+backend/server-binary
+backend/db.sql
