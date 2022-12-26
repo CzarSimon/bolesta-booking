@@ -1,4 +1,4 @@
-name: terraform-pipeline
+name: deployment-pipeline
 
 defaults:
   run:
@@ -26,7 +26,7 @@ jobs:
           sudo dpkg -i trivy_0.18.3_Linux-64bit.deb
       - name: scan deployment images
         run: |
-          for IMAGE in $(cat docker-compose.yml | grep 'image: ' | awk '{print $NF}'); do echo $IMAGE; trivy image --ignore-unfixed --exit-code 1 $IMAGE; done; 
+          for IMAGE in $(cat docker-compose.yml | grep 'image: ' | awk '{print $NF}'); do echo $IMAGE; trivy image --ignore-unfixed --exit-code 1 $IMAGE; done;
 
   rsync-deployment-files:
     name: rsync-deployment-files

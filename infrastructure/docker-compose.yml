@@ -4,13 +4,21 @@ networks:
   monitoring-network:
     name: monitoring-network
 
+volumes:
+  backend-db:
+
+
 services:
   backend:
     image: ghcr.io/czarsimon/bolesta-booking/backend:2.0.0
+    volumes:
+      - backend-db:/var/bolesta-booking
     environment:
-      - DB_FILENAME=':memory:'
+      - DB_FILENAME=/var/bolesta-booking/db.sql
+      - ENABLE_CREATE_USERS=true
     networks:
       - application-network
+      - monitoring-network
     ports:
       - "8080:8080"
 
