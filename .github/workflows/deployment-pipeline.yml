@@ -52,3 +52,18 @@ jobs:
           remote_host: ${{ env.SERVER_HOST }}
           remote_user: cicd
           remote_key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
+
+  start-containers:
+    name: start-containers
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs:
+      - rsync-deployment-files
+    steps:
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: cicd
+          key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
+          script: whoami
