@@ -7,3 +7,14 @@
     text-indent: 20px;
     color: whitesmoke;
 }
+
+.CabinListItem:active {
+    background-color: #508960;
+    cursor: pointer;
+}
+
+.CabinListItem:hover {
+    background-color: #508960;
+    cursor: pointer;
+}
+
