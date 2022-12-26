@@ -66,4 +66,4 @@ jobs:
           host: ${{ env.SERVER_HOST }}
           username: cicd
           key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
-          script: whoami
+          script: docker-compose up -d
