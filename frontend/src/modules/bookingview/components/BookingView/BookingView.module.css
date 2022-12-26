@@ -1,0 +1,35 @@
+.BookingView {
+    margin-left: 20px;
+    margin-right: 20px;
+    padding-top: 40px;
+}
+
+.BookingForm {
+    display: flex;
+    flex-direction: column;
+}
+
+.FormElement {
+    margin-bottom: 20px;
+}
+
+.FormButton {
+    padding: 10px;
+    background-color: #386641;
+    color: whitesmoke;
+    border-style: none;
+    font-size: medium;
+    font-weight: bold;
+    border-radius: 10px;
+    margin-top: 40px;
+}
+
+.FormButton:active {
+    background-color: #508960;
+    cursor: pointer;
+}
+
+.FormButton:hover {
+    background-color: #508960;
+    cursor: pointer;
+}

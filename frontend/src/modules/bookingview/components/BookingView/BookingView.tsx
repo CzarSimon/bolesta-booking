@@ -12,6 +12,8 @@ import {
 } from "../../../../types";
 import { BookingResultModal } from "../BookingResultModal";
 
+import styles from "./BookingView.module.css";
+
 interface Props {
   cabin: Cabin;
   users: User[];
@@ -55,18 +57,18 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
   };
 
   return (
-    <div>
+    <div className={styles.BookingView}>
       <h1>{cabin.name}</h1>
-      <form onSubmit={onSubmit}>
+      <form className={styles.BookingForm} onSubmit={onSubmit}>
         <h2>Välj datum</h2>
-        <label>
+        <label className={styles.FormElement}>
           Från: <input type="date" onChange={updateFrom} />
         </label>
-        <label>
+        <label className={styles.FormElement}>
           Till: <input type="date" onChange={updateTo} />
         </label>
         <h2>Personliga detaljer</h2>
-        <select onChange={updateUserId} defaultValue="none-selected">
+        <select className={styles.FormElement} onChange={updateUserId} defaultValue="none-selected">
           <option disabled value="none-selected">
             -- Välj Lundinare --
           </option>
@@ -76,7 +78,7 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
             </option>
           ))}
         </select>
-        <label>
+        <label className={styles.FormElement}>
           Lösenord: <input type="password" onChange={updatePassword} />
         </label>
         <ErrorText error={err} />
@@ -86,7 +88,7 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
             onClose={() => setSuccess(undefined)}
           />
         ) : null}
-        <button type="submit">Boka</button>
+        <button className={styles.FormButton} type="submit">Boka</button>
       </form>
     </div>
   );
