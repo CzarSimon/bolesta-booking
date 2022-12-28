@@ -1,21 +1,23 @@
-.CabinListItem {
+.BookingsLink {
     border-radius: 20px;
     padding: 10px;
     background-color: #404c24;
-    /*background-color: #7AAB8D;*/
     margin-bottom: 20px;
     text-align: left;
     text-indent: 20px;
     color: whitesmoke;
 }
 
-.CabinListItem:active {
+.Text {
+    text-align: left;
+}
+
+.BookingsLink:active {
     opacity: 80%;
     cursor: pointer;
 }
 
-.CabinListItem:hover {
+.BookingsLink:hover {
     opacity: 80%;
     cursor: pointer;
 }
-

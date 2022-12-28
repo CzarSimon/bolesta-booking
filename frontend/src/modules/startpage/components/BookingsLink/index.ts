@@ -1,0 +1,1 @@
+export { BookingsLink } from "./BookingsLink";

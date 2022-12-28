@@ -1,5 +1,6 @@
 import React from "react";
 import { Cabin } from "../../../../types";
+import { BookingsLink } from "../BookingsLink";
 import { CabinListItem } from "../CabinListItem";
 
 import styles from "./StartPage.module.css";
@@ -13,7 +14,7 @@ export function StartPage({ cabins }: Props) {
     <div className={styles.StartPage}>
       <h1 className={styles.Title}>Bölesta booking</h1>
       <div className={styles.ListTable}>
-        <h2 className={styles.ListTitle}>Stugor</h2> 
+        <h2 className={styles.ListTitle}>Stugor</h2>
         <ul className={styles.CabinList}>
           {cabins.map((cabin) => (
             <li key={cabin.id}>
@@ -22,6 +23,7 @@ export function StartPage({ cabins }: Props) {
           ))}
         </ul>
       </div>
+      <BookingsLink />
     </div>
   );
 }
