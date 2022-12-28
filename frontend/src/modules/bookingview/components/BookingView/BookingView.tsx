@@ -62,10 +62,20 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
       <form className={styles.BookingForm} onSubmit={onSubmit}>
         <h2>Välj datum</h2>
         <label className={styles.FormElement}>
-          Från: <input type="date" onChange={updateFrom} />
+          <p className={styles.LabelText}>Från</p>
+          <input
+            type="date"
+            onChange={updateFrom}
+            className={styles.InputField}
+          />
         </label>
         <label className={styles.FormElement}>
-          Till: <input type="date" onChange={updateTo} />
+          <p className={styles.LabelText}>Till</p>
+          <input
+            type="date"
+            onChange={updateTo}
+            className={styles.InputField}
+          />
         </label>
         <h2>Personliga detaljer</h2>
         <select
@@ -83,7 +93,12 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
           ))}
         </select>
         <label className={styles.FormElement}>
-          Lösenord: <input type="password" onChange={updatePassword} />
+          <p className={styles.LabelText}>Lösenord</p>
+          <input
+            type="password"
+            onChange={updatePassword}
+            className={styles.InputField}
+          />
         </label>
         <ErrorText error={err} />
         {success !== undefined ? (
