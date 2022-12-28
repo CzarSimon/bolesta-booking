@@ -1,0 +1,50 @@
+.Form {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    row-gap: 10px;
+}
+
+.Select {
+    padding: 5px;
+    width: 100%;
+}
+
+.LabelText {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.Button {
+    padding: 10px;
+    background-color: #ad8258;
+    color: whitesmoke;
+    border-style: none;
+    font-size: medium;
+    font-weight: bold;
+    border-radius: 10px;
+    width: 100%;
+}
+
+.Button:hover {
+    opacity: 80%;
+    cursor: pointer;
+}
+
+.Button:active {
+    opacity: 80%;
+    cursor: pointer;
+}
+
+.HideText {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.HideText:hover {
+    cursor: pointer;
+}
+
+.HideText:active {
+    cursor: pointer;
+}

@@ -68,7 +68,11 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
           Till: <input type="date" onChange={updateTo} />
         </label>
         <h2>Personliga detaljer</h2>
-        <select className={styles.FormElement} onChange={updateUserId} defaultValue="none-selected">
+        <select
+          className={styles.Select}
+          onChange={updateUserId}
+          defaultValue="none-selected"
+        >
           <option disabled value="none-selected">
             -- Välj Lundinare --
           </option>
@@ -88,7 +92,9 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
             onClose={() => setSuccess(undefined)}
           />
         ) : null}
-        <button className={styles.FormButton} type="submit">Boka</button>
+        <button className={styles.FormButton} type="submit">
+          Boka
+        </button>
       </form>
     </div>
   );
