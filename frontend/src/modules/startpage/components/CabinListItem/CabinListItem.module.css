@@ -1,7 +1,8 @@
 .CabinListItem {
     border-radius: 20px;
     padding: 10px;
-    background-color: #386641;
+    background-color: #404c24;
+    /*background-color: #7AAB8D;*/
     margin-bottom: 20px;
     text-align: left;
     text-indent: 20px;
@@ -9,12 +10,12 @@
 }
 
 .CabinListItem:active {
-    background-color: #508960;
+    background-color: #5d644c;
     cursor: pointer;
 }
 
 .CabinListItem:hover {
-    background-color: #508960;
+    background-color: #5d644c;
     cursor: pointer;
 }
 

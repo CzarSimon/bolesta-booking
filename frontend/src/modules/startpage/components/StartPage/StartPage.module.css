@@ -10,10 +10,16 @@
 
 .ListTitle {
     text-align: left;
-    text-decoration: underline; 
 }
 
 .CabinList {
     list-style-type: none;
     padding: 0;
+}
+
+.ListTable {
+    border-radius: 20px;
+    background-color: #b4b69c;
+    padding: 10px 20px 100px 20px;
+    
 }

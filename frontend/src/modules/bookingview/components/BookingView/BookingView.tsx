@@ -58,7 +58,7 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
 
   return (
     <div className={styles.BookingView}>
-      <h1>{cabin.name}</h1>
+      <h1 className={styles.CabinName}>{cabin.name}</h1>
       <form className={styles.BookingForm} onSubmit={onSubmit}>
         <h2>Välj datum</h2>
         <label className={styles.FormElement}>

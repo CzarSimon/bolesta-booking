@@ -1,6 +1,6 @@
 .BookingView {
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-left: 30px;
+    margin-right: 30px;
     padding-top: 40px;
 }
 
@@ -15,7 +15,7 @@
 
 .FormButton {
     padding: 10px;
-    background-color: #386641;
+    background-color: #ad8258;
     color: whitesmoke;
     border-style: none;
     font-size: medium;
@@ -25,11 +25,21 @@
 }
 
 .FormButton:active {
-    background-color: #508960;
+    background-color: #ac6a26;
     cursor: pointer;
 }
 
 .FormButton:hover {
-    background-color: #508960;
+    background-color: #ac6a26;
     cursor: pointer;
+}
+
+.CabinName {
+    margin-left: 0px;
+    font-size:x-large;
+    border-radius: 8px;
+    padding: 30px;
+    background-color: #404c24;
+    text-align: left;
+    color: whitesmoke;
 }
