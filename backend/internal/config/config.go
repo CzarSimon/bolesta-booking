@@ -6,6 +6,7 @@ import (
 
 	"github.com/CzarSimon/httputil/dbutil"
 	"github.com/CzarSimon/httputil/environ"
+	"github.com/CzarSimon/httputil/jwt"
 	"github.com/CzarSimon/httputil/logger"
 )
 
@@ -17,6 +18,7 @@ type Config struct {
 	MigrationsPath    string
 	Port              string
 	EnableCreateUsers bool
+	JWT               jwt.Credentials
 }
 
 // GetConfig reads, parses and marshalls the applications configuration.
@@ -43,4 +45,11 @@ func getBoolEnvVar(key string, defaultValue bool) bool {
 	}
 
 	return val
+}
+
+func getJWTCredentials() jwt.Credentials {
+	return jwt.Credentials{
+		Issuer: environ.Get("JWT_ISSUER", "bolesta-booking"),
+		Secret: environ.MustGet("JWT_SECRET"),
+	}
 }

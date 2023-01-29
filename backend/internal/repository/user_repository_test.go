@@ -197,3 +197,40 @@ func Test_userRepo_FindAll(t *testing.T) {
 	assert.Error(err)
 	assert.True(errors.Is(err, context.Canceled))
 }
+
+func Test_userRepo_FindByEmail(t *testing.T) {
+	assert := assert.New(t)
+	db := testutil.InMemoryDB(true, "../../resources/db/sqlite")
+	repo := repository.NewUserRepository(db)
+	ctx := context.Background()
+
+	u1 := models.User{
+		ID:        id.New(),
+		Name:      "Some Name",
+		Email:     "mail@mail.com",
+		Password:  id.New(),
+		Salt:      id.New(),
+		CreatedAt: timeutil.Now(),
+		UpdatedAt: timeutil.Now(),
+	}
+
+	user, found, err := repo.FindByEmail(ctx, u1.Email)
+	assert.NoError(err)
+	assert.False(found)
+	assert.Empty(user)
+
+	err = repo.Save(ctx, u1)
+	assert.NoError(err)
+
+	user, found, err = repo.FindByEmail(ctx, u1.Email)
+	assert.NoError(err)
+	assert.True(found)
+	assert.Equal(u1, user)
+
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	_, _, err = repo.FindByEmail(ctx, u1.Email)
+	assert.Error(err)
+	assert.True(errors.Is(err, context.Canceled))
+}

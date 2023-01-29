@@ -13,6 +13,7 @@ type UserRepository interface {
 	Save(ctx context.Context, user models.User) error
 	Find(ctx context.Context, id string) (models.User, bool, error)
 	FindAll(ctx context.Context) ([]models.User, error)
+	FindByEmail(ctx context.Context, email string) (models.User, bool, error)
 }
 
 func NewUserRepository(db *sql.DB) UserRepository {
@@ -119,6 +120,36 @@ func (r *userRepo) FindAll(ctx context.Context) ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+const findUserByEmailQuery = `
+	SELECT
+		id,
+		name,
+		email,
+		password,
+		salt,
+		created_at,
+		updated_at
+	FROM
+		user_account
+	WHERE
+		email = ?
+`
+
+func (r *userRepo) FindByEmail(ctx context.Context, email string) (models.User, bool, error) {
+	var u models.User
+	err := r.db.QueryRowContext(ctx, findUserByEmailQuery, email).Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.Salt, &u.CreatedAt, &u.UpdatedAt)
+
+	if err == sql.ErrNoRows {
+		return models.User{}, false, nil
+	}
+
+	if err != nil {
+		return models.User{}, false, fmt.Errorf("failed to query be email: %w", err)
+	}
+
+	return u, true, nil
 }
 
 const findUsersByIDsQuery = `

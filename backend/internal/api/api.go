@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/CzarSimon/bolesta-booking/backend/internal/api/auth"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/api/bookings"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/api/cabins"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/api/users"
@@ -13,6 +14,7 @@ import (
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
 	"github.com/CzarSimon/httputil"
 	"github.com/CzarSimon/httputil/dbutil"
+	"github.com/CzarSimon/httputil/jwt"
 	"github.com/CzarSimon/httputil/logger"
 	"github.com/gin-contrib/cors"
 	"go.uber.org/zap"
@@ -39,6 +41,10 @@ func Start(cfg config.Config) {
 	userSvc := &service.UserService{
 		UserRepo: userRepo,
 	}
+	authSvc := &service.AuthService{
+		UserRepo: userRepo,
+		Issuer:   jwt.NewIssuer(cfg.JWT),
+	}
 	cabinSvc := &service.CabinService{
 		CabinRepo: cabinRepo,
 	}
@@ -49,6 +55,7 @@ func Start(cfg config.Config) {
 	}
 
 	users.AttachController(userSvc, r, cfg)
+	auth.AttachController(authSvc, r)
 	cabins.AttachController(cabinSvc, r)
 	bookings.AttachController(bookingSvc, r)
 
