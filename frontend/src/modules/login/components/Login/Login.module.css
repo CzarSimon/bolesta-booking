@@ -1,0 +1,52 @@
+.Title {
+    padding-top: 40px;
+    padding-bottom: 20px;
+}
+
+.LoginPage{
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.Details{
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+.LabelText {
+    font-size: small;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.FormButton {
+    padding: 10px;
+    background-color: #ad8258;
+    color: whitesmoke;
+    border-style: none;
+    font-size: medium;
+    font-weight: bold;
+    border-radius: 10px;
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.FormButton:active {
+    background-color: #ac6a26;
+    cursor: pointer;
+}
+
+.FormButton:hover {
+    background-color: #ac6a26;
+    cursor: pointer;
+}
+
+.PoweredBy {
+    position:absolute;
+    margin-left: 30%;
+    margin-top: 250px;
+    margin-bottom: 1px;
+    font-size: x-small;
+    justify-content: center;
+}
