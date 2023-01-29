@@ -2,9 +2,14 @@ import React from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { BookingListContainer } from "../modules/bookinglist";
 import { BookingViewContainer } from "../modules/bookingview";
+import { LoginContainer } from "../modules/login";
 import { StartPageContainer } from "../modules/startpage";
 
 export const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <LoginContainer />,
+  },
   {
     path: "/",
     element: <StartPageContainer />,
