@@ -38,6 +38,16 @@ export interface BookingFilter {
   userId?: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthenticatedResponse {
+  user: User;
+  token: string;
+}
+
 export class Result<T, E> {
   private val?: T;
   private err?: E;
