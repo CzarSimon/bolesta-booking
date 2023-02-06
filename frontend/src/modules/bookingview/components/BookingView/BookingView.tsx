@@ -1,5 +1,5 @@
 import React, { ChangeEvent, SyntheticEvent, useState } from "react";
-import { DatePicker } from "antd";
+import { DatePicker, Input } from "antd";
 import { ErrorText } from "../../../../components/ErrorText";
 import {
   Cabin,
@@ -64,14 +64,7 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
           placeholder="Välj Lundinare"
           onChange={setUserId}
         />
-        <label className={styles.FormElement}>
-          <p className={styles.LabelText}>Lösenord</p>
-          <input
-            type="password"
-            onChange={updatePassword}
-            className={styles.InputField}
-          />
-        </label>
+        <Input.Password placeholder="Lösenord" onChange={updatePassword} />
         <ErrorText error={err} />
         {success !== undefined ? (
           <BookingResultModal
