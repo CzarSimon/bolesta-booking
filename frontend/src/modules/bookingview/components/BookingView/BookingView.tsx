@@ -1,4 +1,5 @@
 import React, { ChangeEvent, SyntheticEvent, useState } from "react";
+import { DatePicker } from "antd";
 import { ErrorText } from "../../../../components/ErrorText";
 import {
   Cabin,
@@ -13,6 +14,7 @@ import {
 import { BookingResultModal } from "../BookingResultModal";
 
 import styles from "./BookingView.module.css";
+import { UserSelect } from "../../../../components/UserSelect";
 
 interface Props {
   cabin: Cabin;
@@ -28,20 +30,14 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
   const [err, setErr] = useState<Optional<string>>();
   const [success, setSuccess] = useState<Optional<boolean>>();
 
-  const updateFrom = (e: ChangeEvent<HTMLInputElement>) => {
-    setFrom(new Date(e.target.value));
-  };
-
-  const updateTo = (e: ChangeEvent<HTMLInputElement>) => {
-    setTo(new Date(e.target.value));
-  };
-
-  const updateUserId = (e: SyntheticEvent<HTMLSelectElement, Event>) => {
-    setUserId(e.currentTarget.value);
-  };
-
   const updatePassword = (e: ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
+  };
+
+  const updateDates = (_: any, dates: [string, string]) => {
+    const [fromStr, toStr] = dates;
+    setFrom(new Date(fromStr));
+    setTo(new Date(toStr));
   };
 
   const onSubmit = (e: SyntheticEvent) => {
@@ -61,37 +57,13 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
       <h1 className={styles.CabinName}>{cabin.name}</h1>
       <form className={styles.BookingForm} onSubmit={onSubmit}>
         <h2>Välj datum</h2>
-        <label className={styles.FormElement}>
-          <p className={styles.LabelText}>Från</p>
-          <input
-            type="date"
-            onChange={updateFrom}
-            className={styles.InputField}
-          />
-        </label>
-        <label className={styles.FormElement}>
-          <p className={styles.LabelText}>Till</p>
-          <input
-            type="date"
-            onChange={updateTo}
-            className={styles.InputField}
-          />
-        </label>
+        <DatePicker.RangePicker onChange={updateDates} />
         <h2>Personliga detaljer</h2>
-        <select
-          className={styles.Select}
-          onChange={updateUserId}
-          defaultValue="none-selected"
-        >
-          <option disabled value="none-selected">
-            -- Välj Lundinare --
-          </option>
-          {users.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
-          ))}
-        </select>
+        <UserSelect
+          users={users}
+          placeholder="Välj Lundinare"
+          onChange={setUserId}
+        />
         <label className={styles.FormElement}>
           <p className={styles.LabelText}>Lösenord</p>
           <input
