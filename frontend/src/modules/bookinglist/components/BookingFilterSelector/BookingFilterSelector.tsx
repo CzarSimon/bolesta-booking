@@ -3,6 +3,7 @@ import { Button } from "antd";
 import { Cabin, User, BookingFilter, Optional } from "../../../../types";
 
 import styles from "./BookingFilterSelector.module.css";
+import { ItemSelect } from "../../../../components/ItemSelect";
 
 interface Props {
   cabins: Cabin[];
@@ -17,13 +18,8 @@ export function BookingFilterSelector({ cabins, users, updateFilter }: Props) {
   const [cabinId, setCabinId] = useState<Optional<string>>();
   const [userId, setUserId] = useState<Optional<string>>();
 
-  const updateCabinId = (e: SyntheticEvent<HTMLSelectElement, Event>) => {
-    setCabinId(getValue(e.currentTarget.value));
-  };
-
-  const updateUserId = (e: SyntheticEvent<HTMLSelectElement, Event>) => {
-    setUserId(getValue(e.currentTarget.value));
-  };
+  const updateCabinId = (id: string) => setCabinId(getValue(id));
+  const updateUserId = (id: string) => setUserId(getValue(id));
 
   const onSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
@@ -36,41 +32,23 @@ export function BookingFilterSelector({ cabins, users, updateFilter }: Props) {
   return (
     <div>
       {visible && (
-        <form onSubmit={onSubmit} className={styles.Form}>
-          <label>
-            <p className={styles.LabelText}>Stuga</p>
-            <select
-              className={styles.Select}
-              onChange={updateCabinId}
-              defaultValue={cabinId}
-            >
-              <option value={ANY_VALUE}>Alla</option>
-              {cabins.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <p className={styles.LabelText}>Bokat av</p>
-            <select
-              className={styles.Select}
-              onChange={updateUserId}
-              defaultValue={userId}
-            >
-              <option value={ANY_VALUE}>Alla</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className={styles.Form}>
+          <p className={styles.LabelText}>Stuga</p>
+          <ItemSelect
+            items={cabins}
+            onChange={updateCabinId}
+            anyOption={{ label: "Alla", value: ANY_VALUE }}
+          />
+          <p className={styles.LabelText}>Bokat av</p>
+          <ItemSelect
+            items={users}
+            onChange={updateUserId}
+            anyOption={{ label: "Alla", value: ANY_VALUE }}
+          />
           <Button block type="primary" onMouseUp={onSubmit}>
             Filtrera
           </Button>
-        </form>
+        </div>
       )}
       {visible ? (
         <Button block type="text" onMouseUp={() => setVisible(false)}>

@@ -14,7 +14,7 @@ import {
 import { BookingResultModal } from "../BookingResultModal";
 
 import styles from "./BookingView.module.css";
-import { UserSelect } from "../../../../components/UserSelect";
+import { ItemSelect } from "../../../../components/ItemSelect";
 
 interface Props {
   cabin: Cabin;
@@ -59,8 +59,8 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
         <h2>Välj datum</h2>
         <DatePicker.RangePicker onChange={updateDates} />
         <h2>Personliga detaljer</h2>
-        <UserSelect
-          users={users}
+        <ItemSelect
+          items={users}
           placeholder="Välj Lundinare"
           onChange={setUserId}
         />
