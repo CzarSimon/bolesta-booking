@@ -19,6 +19,7 @@ export function UserSelect({ placeholder, users, onChange }: Props) {
       placeholder={placeholder}
       options={mapUsersToOptions(users)}
       onChange={onChange}
+      allowClear
     />
   );
 }

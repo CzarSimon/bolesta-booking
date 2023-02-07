@@ -1,4 +1,5 @@
 import React, { SyntheticEvent, useState } from "react";
+import { Button } from "antd";
 import { Cabin, User, BookingFilter, Optional } from "../../../../types";
 
 import styles from "./BookingFilterSelector.module.css";
@@ -66,19 +67,19 @@ export function BookingFilterSelector({ cabins, users, updateFilter }: Props) {
               ))}
             </select>
           </label>
-          <button className={styles.Button} type="submit">
+          <Button block type="primary" onMouseUp={onSubmit}>
             Filtrera
-          </button>
+          </Button>
         </form>
       )}
       {visible ? (
-        <p className={styles.HideText} onClick={() => setVisible(false)}>
+        <Button block type="text" onMouseUp={() => setVisible(false)}>
           Dölj filter
-        </p>
+        </Button>
       ) : (
-        <button className={styles.Button} onClick={() => setVisible(true)}>
+        <Button block onMouseUp={() => setVisible(true)}>
           Visa filter
-        </button>
+        </Button>
       )}
     </div>
   );

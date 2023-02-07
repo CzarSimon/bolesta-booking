@@ -1,5 +1,5 @@
 import React, { ChangeEvent, SyntheticEvent, useState } from "react";
-import { DatePicker, Input } from "antd";
+import { Button, DatePicker, Input } from "antd";
 import { ErrorText } from "../../../../components/ErrorText";
 import {
   Cabin,
@@ -55,7 +55,7 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
   return (
     <div className={styles.BookingView}>
       <h1 className={styles.CabinName}>{cabin.name}</h1>
-      <form className={styles.BookingForm} onSubmit={onSubmit}>
+      <div className={styles.BookingForm}>
         <h2>Välj datum</h2>
         <DatePicker.RangePicker onChange={updateDates} />
         <h2>Personliga detaljer</h2>
@@ -72,10 +72,10 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
             onClose={() => setSuccess(undefined)}
           />
         ) : null}
-        <button className={styles.FormButton} type="submit">
+        <Button type="primary" block onMouseUp={onSubmit}>
           Boka
-        </button>
-      </form>
+        </Button>
+      </div>
     </div>
   );
 }
