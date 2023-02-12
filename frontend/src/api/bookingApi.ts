@@ -1,21 +1,40 @@
+import { BASE_URL } from "../constants";
 import { BookingRequest, Booking, BookingFilter } from "../types";
+import { httpclient } from "./httpclient";
+import { wrapAndLogError } from "./util";
 
 export async function createBooking(req: BookingRequest): Promise<Booking> {
-  return fetch(`http://localhost:8080/v1/bookings`, {
-    method: "POST",
-    body: JSON.stringify(req),
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  }).then((res) => res.json());
+  const { body, error, metadata } = await httpclient.post<Booking>({
+    url: `${BASE_URL}/v1/bookings`,
+    body: req,
+  });
+
+  if (!body) {
+    throw wrapAndLogError(
+      `failed to create booking(cabinId=${req.cabinId})`,
+      error,
+      metadata
+    );
+  }
+
+  return body;
 }
 
 export async function listBookings(filter?: BookingFilter): Promise<Booking[]> {
   const queryString = createBookingFilter(filter);
-  return fetch(`http://localhost:8080/v1/bookings${queryString}`).then((res) =>
-    res.json()
-  );
+  const { body, error, metadata } = await httpclient.get<Booking[]>({
+    url: `${BASE_URL}/v1/bookings${queryString}`,
+  });
+
+  if (!body) {
+    throw wrapAndLogError(
+      `failed to fetch bookings with filter=${queryString}`,
+      error,
+      metadata
+    );
+  }
+
+  return body;
 }
 
 function createBookingFilter(filter?: BookingFilter): string {

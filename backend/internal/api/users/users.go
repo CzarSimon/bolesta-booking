@@ -22,6 +22,7 @@ func AttachController(svc *service.UserService, r gin.IRouter, cfg config.Config
 		svc:               svc,
 		enableCreateUsers: cfg.EnableCreateUsers,
 	}
+	// authz := authutil.NewMiddleware(cfg.JWT)
 	g := r.Group("/v1/users")
 
 	g.GET("", controller.GetUsers)

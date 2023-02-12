@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AuthenticatedResponse, LoginRequest, User } from "../../types";
 import { AuthContext } from "./AuthContext";
 import { requestLogin } from "../../api";
-
-const AUTH_TOKEN_KEY = "@bolesta-booking:frontend:AUTH_TOKEN";
-const CURRENT_USER_KEY = "@bolesta-booking:frontend:CURRENT_USER_KEY";
+import { AUTH_TOKEN_KEY, CURRENT_USER_KEY } from "../../constants";
+import { removeHeader, setHeader } from "../../api/httpclient";
 
 interface UseAuthResult {
   login: (req: LoginRequest) => void;
@@ -49,11 +48,13 @@ export function useIsAuthenticated(): boolean {
 }
 
 function storeAuthInfo({ user, token }: AuthenticatedResponse) {
+  setHeader("Authorization", `Bearer ${token}`);
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
 }
 
 function removeAuthInfo() {
+  removeHeader("Authorization");
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(CURRENT_USER_KEY);
 }

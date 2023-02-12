@@ -1,14 +1,24 @@
+import { BASE_URL } from "../constants";
 import { AuthenticatedResponse, LoginRequest } from "../types";
+import { httpclient } from "./httpclient";
+import { wrapAndLogError } from "./util";
 
 export async function requestLogin(
   req: LoginRequest
 ): Promise<AuthenticatedResponse> {
-  return fetch(`http://localhost:8080/v1/login`, {
-    method: "POST",
-    body: JSON.stringify(req),
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  }).then((res) => res.json());
+  const { body, error, metadata } =
+    await httpclient.post<AuthenticatedResponse>({
+      url: `${BASE_URL}/v1/login`,
+      body: req,
+    });
+
+  if (!body) {
+    throw wrapAndLogError(
+      `failed to login user(email=${req.email})`,
+      error,
+      metadata
+    );
+  }
+
+  return body;
 }

@@ -48,6 +48,11 @@ export interface AuthenticatedResponse {
   token: string;
 }
 
+export interface Client {
+  id: string;
+  sessionId: string;
+}
+
 export class Result<T, E> {
   private val?: T;
   private err?: E;

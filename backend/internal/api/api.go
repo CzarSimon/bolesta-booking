@@ -17,6 +17,7 @@ import (
 	"github.com/CzarSimon/httputil/jwt"
 	"github.com/CzarSimon/httputil/logger"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
@@ -31,8 +32,7 @@ func Start(cfg config.Config) {
 		log.Panic("Failed to apply upgrade migratons", zap.Error(err))
 	}
 
-	r := httputil.NewRouter("bölesta-booking/backend", healthCheck(db))
-	r.Use(cors.Default())
+	r := configureRouter(db)
 
 	userRepo := repository.NewUserRepository(db)
 	cabinRepo := repository.NewCabinRepository(db)
@@ -76,4 +76,15 @@ func healthCheck(db *sql.DB) httputil.HealthFunc {
 	return func() error {
 		return dbutil.Connected(db)
 	}
+}
+
+func configureRouter(db *sql.DB) *gin.Engine {
+	r := httputil.NewRouter("bölesta-booking/backend", healthCheck(db))
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization", "X-Request-ID", "X-Session-ID", "X-Client-ID")
+	r.Use(cors.New(corsConfig))
+
+	return r
 }

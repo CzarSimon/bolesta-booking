@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AuthContext } from "./AuthContext";
 import { Optional, User } from "../../types";
+import { initLoggerAndHttpClient, readUser } from "../../init";
 
 interface Props {
   children: JSX.Element;
@@ -14,6 +15,14 @@ export function AuthProvider({ children }: Props) {
     setAuthenticated(true);
     setUser(user);
   };
+
+  useEffect(() => {
+    initLoggerAndHttpClient();
+    const user = readUser();
+    if (user) {
+      authenticate(user);
+    }
+  }, []);
 
   const logout = () => {
     setAuthenticated(false);
