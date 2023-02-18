@@ -3,7 +3,9 @@ package cabins
 import (
 	"net/http"
 
+	"github.com/CzarSimon/bolesta-booking/backend/internal/config"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
+	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,9 +15,11 @@ type controller struct {
 }
 
 // AttachController attaches a controller to the specified route group.
-func AttachController(svc *service.CabinService, r gin.IRouter) {
+func AttachController(svc *service.CabinService, r gin.IRouter, cfg config.Config) {
 	controller := &controller{svc: svc}
-	g := r.Group("/v1/cabins")
+	authz := authutil.NewMiddleware(cfg.JWT)
+
+	g := r.Group("/v1/cabins").Use(authz.Secure(authutil.ReadCabin))
 
 	g.GET("", controller.GetCabins)
 	g.GET("/:id", controller.GetCabin)

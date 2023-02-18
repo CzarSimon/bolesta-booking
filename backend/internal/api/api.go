@@ -56,8 +56,8 @@ func Start(cfg config.Config) {
 
 	users.AttachController(userSvc, r, cfg)
 	auth.AttachController(authSvc, r)
-	cabins.AttachController(cabinSvc, r)
-	bookings.AttachController(bookingSvc, r)
+	cabins.AttachController(cabinSvc, r, cfg)
+	bookings.AttachController(bookingSvc, r, cfg)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,

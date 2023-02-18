@@ -6,6 +6,7 @@ import (
 	"github.com/CzarSimon/bolesta-booking/backend/internal/config"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
+	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil"
 	"github.com/CzarSimon/httputil"
 	"github.com/gin-gonic/gin"
 )
@@ -22,12 +23,12 @@ func AttachController(svc *service.UserService, r gin.IRouter, cfg config.Config
 		svc:               svc,
 		enableCreateUsers: cfg.EnableCreateUsers,
 	}
-	// authz := authutil.NewMiddleware(cfg.JWT)
+	authz := authutil.NewMiddleware(cfg.JWT)
 	g := r.Group("/v1/users")
 
-	g.GET("", controller.GetUsers)
+	g.GET("", authz.Secure(authutil.ReadUser), controller.GetUsers)
 	g.POST("", controller.CreateUser)
-	g.GET("/:id", controller.GetUser)
+	g.GET("/:id", authz.Secure(authutil.ReadUser), controller.GetUser)
 }
 
 func (h *controller) GetUser(c *gin.Context) {

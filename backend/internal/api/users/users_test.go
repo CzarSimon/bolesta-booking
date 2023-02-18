@@ -13,9 +13,12 @@ import (
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/repository"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
+	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil"
+	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil/authtest"
 	"github.com/CzarSimon/httputil"
 	"github.com/CzarSimon/httputil/client/rpc"
 	"github.com/CzarSimon/httputil/id"
+	"github.com/CzarSimon/httputil/jwt"
 	"github.com/CzarSimon/httputil/testutil"
 	"github.com/CzarSimon/httputil/timeutil"
 	_ "github.com/mattn/go-sqlite3"
@@ -24,7 +27,7 @@ import (
 
 func TestGetUsers(t *testing.T) {
 	assert := assert.New(t)
-	router, svc := setupRouter(false)
+	router, svc, cfg := setupRouter(false)
 	ctx := context.Background()
 
 	u1 := models.User{
@@ -54,6 +57,8 @@ func TestGetUsers(t *testing.T) {
 	assert.NoError(err)
 
 	req := testutil.CreateRequest(http.MethodGet, "/v1/users", nil)
+	authtest.Authenticate(req, id.New(), authutil.UserRole, cfg.JWT)
+
 	res := testutil.PerformRequest(router, req)
 	assert.Equal(http.StatusOK, res.Code)
 	var body []models.User
@@ -62,9 +67,20 @@ func TestGetUsers(t *testing.T) {
 	assert.Len(body, 2)
 }
 
+func TestGetUsers_Unauthorized_and_Forbidden(t *testing.T) {
+	router, _, cfg := setupRouter(false)
+	authtest.Test401and403(authtest.TestOpts{
+		T:        t,
+		Router:   router,
+		JWTCreds: cfg.JWT,
+		Method:   http.MethodGet,
+		Path:     "/v1/users",
+	}, authutil.AnonymousRole)
+}
+
 func TestGetUser(t *testing.T) {
 	assert := assert.New(t)
-	router, svc := setupRouter(false)
+	router, svc, cfg := setupRouter(false)
 	ctx := context.Background()
 
 	u1 := models.User{
@@ -82,6 +98,8 @@ func TestGetUser(t *testing.T) {
 
 	path := fmt.Sprintf("/v1/users/%s", u1.ID)
 	req := testutil.CreateRequest(http.MethodGet, path, nil)
+	authtest.Authenticate(req, id.New(), authutil.UserRole, cfg.JWT)
+
 	res := testutil.PerformRequest(router, req)
 	assert.Equal(http.StatusOK, res.Code)
 	var body models.User
@@ -93,13 +111,26 @@ func TestGetUser(t *testing.T) {
 	assert.Equal(u1, body)
 
 	req = testutil.CreateRequest(http.MethodGet, "/v1/users/does-not-extis", nil)
+	authtest.Authenticate(req, id.New(), authutil.UserRole, cfg.JWT)
 	res = testutil.PerformRequest(router, req)
+
 	assert.Equal(http.StatusNotFound, res.Code)
+}
+
+func TestGetUser_Unauthorized_and_Forbidden(t *testing.T) {
+	router, _, cfg := setupRouter(false)
+	authtest.Test401and403(authtest.TestOpts{
+		T:        t,
+		Router:   router,
+		JWTCreds: cfg.JWT,
+		Method:   http.MethodGet,
+		Path:     "/v1/users/some-id",
+	}, authutil.AnonymousRole)
 }
 
 func TestCreateUser(t *testing.T) {
 	assert := assert.New(t)
-	router, _ := setupRouter(true)
+	router, _, cfg := setupRouter(true)
 
 	ur := models.CreateUserRequest{
 		Name:     "Some Name",
@@ -120,6 +151,8 @@ func TestCreateUser(t *testing.T) {
 
 	path := fmt.Sprintf("/v1/users/%s", body.ID)
 	req = testutil.CreateRequest(http.MethodGet, path, nil)
+	authtest.Authenticate(req, id.New(), authutil.UserRole, cfg.JWT)
+
 	res = testutil.PerformRequest(router, req)
 	assert.Equal(http.StatusOK, res.Code)
 	var getBody models.User
@@ -131,7 +164,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestCreateUser_notEnabled(t *testing.T) {
 	assert := assert.New(t)
-	router, _ := setupRouter(false)
+	router, _, _ := setupRouter(false)
 
 	ur := models.CreateUserRequest{
 		Name:     "Some Name",
@@ -146,7 +179,7 @@ func TestCreateUser_notEnabled(t *testing.T) {
 
 func TestCreateUser_invalid(t *testing.T) {
 	assert := assert.New(t)
-	router, _ := setupRouter(true)
+	router, _, _ := setupRouter(true)
 
 	type testCase struct {
 		req     models.CreateUserRequest
@@ -216,7 +249,7 @@ func TestCreateUser_invalid(t *testing.T) {
 	}
 }
 
-func setupRouter(enableCreateUsers bool) (http.Handler, *service.UserService) {
+func setupRouter(enableCreateUsers bool) (http.Handler, *service.UserService, config.Config) {
 	db := testutil.InMemoryDB(true, "../../../resources/db/sqlite")
 	repo := repository.NewUserRepository(db)
 	svc := &service.UserService{
@@ -227,6 +260,14 @@ func setupRouter(enableCreateUsers bool) (http.Handler, *service.UserService) {
 		return nil
 	})
 
-	users.AttachController(svc, r, config.Config{EnableCreateUsers: enableCreateUsers})
-	return r, svc
+	cfg := config.Config{
+		EnableCreateUsers: enableCreateUsers,
+		JWT: jwt.Credentials{
+			Issuer: "bolesta-booking/backend",
+			Secret: id.New(),
+		},
+	}
+
+	users.AttachController(svc, r, cfg)
+	return r, svc, cfg
 }

@@ -3,8 +3,10 @@ package bookings
 import (
 	"net/http"
 
+	"github.com/CzarSimon/bolesta-booking/backend/internal/config"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
+	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil"
 	"github.com/CzarSimon/httputil"
 	"github.com/gin-gonic/gin"
 )
@@ -15,13 +17,15 @@ type controller struct {
 }
 
 // AttachController attaches a controller to the specified route group.
-func AttachController(svc *service.BookingService, r gin.IRouter) {
+func AttachController(svc *service.BookingService, r gin.IRouter, cfg config.Config) {
 	controller := &controller{svc: svc}
 	g := r.Group("/v1/bookings")
 
-	g.POST("", controller.createBooking)
-	g.GET("", controller.listBookings)
-	g.GET("/:id", controller.getBooking)
+	authz := authutil.NewMiddleware(cfg.JWT)
+
+	g.POST("", authz.Secure(authutil.CreateBooking), controller.createBooking)
+	g.GET("", authz.Secure(authutil.ReadBooking), controller.listBookings)
+	g.GET("/:id", authz.Secure(authutil.ReadBooking), controller.getBooking)
 }
 
 func (h *controller) getBooking(c *gin.Context) {

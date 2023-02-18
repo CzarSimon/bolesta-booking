@@ -1,8 +1,29 @@
 package authutil
 
+const AdminRole = "ADMIN"
 const UserRole = "USER"
+const AnonymousRole = "ANONYMOUS"
 
 type Permission int
+
+func (p Permission) String() string {
+	switch p {
+	case ReadBooking:
+		return "ReadBooking"
+	case CreateBooking:
+		return "CreateBooking"
+	case DeleteBooking:
+		return "DeleteBooking"
+	case ReadCabin:
+		return "ReadCabin"
+	case ReadUser:
+		return "ReadUser"
+	case CreateUser:
+		return "CreateUser"
+	default:
+		return "Unkown"
+	}
+}
 
 const (
 	ReadBooking Permission = iota
@@ -10,6 +31,7 @@ const (
 	DeleteBooking
 	ReadCabin
 	ReadUser
+	CreateUser
 )
 
 type role struct {
@@ -35,9 +57,32 @@ var userRole = role{
 	},
 }
 
+var adminRole = role{
+	permissions: map[Permission]bool{
+		ReadBooking:   true,
+		CreateBooking: true,
+		DeleteBooking: true,
+		ReadCabin:     true,
+		ReadUser:      true,
+		CreateUser:    true,
+	},
+}
+
+var anonymousRole = role{
+	permissions: map[Permission]bool{},
+}
+
 func getRole(roleName string) (role, bool) {
 	if roleName == UserRole {
 		return userRole, true
+	}
+
+	if roleName == AdminRole {
+		return adminRole, true
+	}
+
+	if roleName == AnonymousRole {
+		return anonymousRole, true
 	}
 
 	return role{}, false

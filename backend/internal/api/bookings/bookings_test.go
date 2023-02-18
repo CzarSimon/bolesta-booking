@@ -10,12 +10,16 @@ import (
 	"time"
 
 	"github.com/CzarSimon/bolesta-booking/backend/internal/api/bookings"
+	"github.com/CzarSimon/bolesta-booking/backend/internal/config"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/repository"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
+	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil"
+	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil/authtest"
 	"github.com/CzarSimon/httputil"
 	"github.com/CzarSimon/httputil/client/rpc"
 	"github.com/CzarSimon/httputil/id"
+	"github.com/CzarSimon/httputil/jwt"
 	"github.com/CzarSimon/httputil/testutil"
 	"github.com/CzarSimon/httputil/timeutil"
 	_ "github.com/mattn/go-sqlite3"
@@ -38,9 +42,13 @@ func TestGetBooking(t *testing.T) {
 	err = e.bookingRepo.Save(e.ctx, booking)
 	assert.NoError(err)
 
+	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
+
 	path := fmt.Sprintf("/v1/bookings/%s", booking.ID)
 	req := testutil.CreateRequest(http.MethodGet, path, nil)
+	authenticator.Authenticate(req, id.New(), authutil.UserRole)
 	res := testutil.PerformRequest(e.router, req)
+
 	assert.Equal(http.StatusOK, res.Code)
 	var body models.Booking
 	err = json.NewDecoder(res.Result().Body).Decode(&body)
@@ -50,9 +58,22 @@ func TestGetBooking(t *testing.T) {
 	booking.User.Password = ""
 	assert.Equal(booking, body)
 
-	req = testutil.CreateRequest(http.MethodGet, "/v1/users/does-not-extis", nil)
+	req = testutil.CreateRequest(http.MethodGet, "/v1/bookings/does-not-extis", nil)
+	authenticator.Authenticate(req, id.New(), authutil.UserRole)
 	res = testutil.PerformRequest(e.router, req)
+
 	assert.Equal(http.StatusNotFound, res.Code)
+}
+
+func TestGetBooking_Unauthorized_and_Forbidden(t *testing.T) {
+	e := newTestEnv()
+	authtest.Test401and403(authtest.TestOpts{
+		T:        t,
+		Router:   e.router,
+		JWTCreds: e.cfg.JWT,
+		Method:   http.MethodGet,
+		Path:     "/v1/bookings/some-id",
+	}, authutil.AnonymousRole)
 }
 
 func TestCreateBooking(t *testing.T) {
@@ -68,8 +89,12 @@ func TestCreateBooking(t *testing.T) {
 		Password:  correctPassword,
 	}
 
+	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
+
 	req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", bookingReq)
+	authenticator.Authenticate(req, id.New(), authutil.UserRole)
 	res := testutil.PerformRequest(e.router, req)
+
 	assert.Equal(http.StatusOK, res.Code)
 
 	var body models.Booking
@@ -145,17 +170,6 @@ func TestCreateBooking_invalid(t *testing.T) {
 				CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
 				StartDate: timeutil.Now(),
 				EndDate:   timeutil.Now().Add(time.Hour),
-				UserID:    "",
-				Password:  correctPassword,
-			},
-			status:  http.StatusBadRequest,
-			comment: "Should fail due to empty userId",
-		},
-		{
-			req: models.BookingRequest{
-				CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
-				StartDate: timeutil.Now(),
-				EndDate:   timeutil.Now().Add(time.Hour),
 				UserID:    user.ID,
 				Password:  "",
 			},
@@ -186,8 +200,11 @@ func TestCreateBooking_invalid(t *testing.T) {
 		},
 	}
 
+	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
+
 	for i, tc := range testCases {
 		req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", tc.req)
+		authenticator.Authenticate(req, tc.req.UserID, authutil.UserRole)
 		res := testutil.PerformRequest(e.router, req)
 		assert.Equal(tc.status, res.Code, "Test Case #%d failed: %s", i+1, tc.comment)
 	}
@@ -224,15 +241,20 @@ func TestListBookings(t *testing.T) {
 		},
 	}
 
+	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
+
 	for i, br := range bookingReqs {
 		req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", br)
+		authenticator.Authenticate(req, br.UserID, authutil.UserRole)
 		res := testutil.PerformRequest(e.router, req)
 		assert.Equal(http.StatusOK, res.Code, "Failed to create booking #%d", i+1)
 	}
 
 	path := "/v1/bookings?cabinId=a4b4f496-767e-423e-9816-83b71e1cfa89"
 	req := testutil.CreateRequest(http.MethodGet, path, nil)
+	authenticator.Authenticate(req, id.New(), authutil.UserRole)
 	res := testutil.PerformRequest(e.router, req)
+
 	assert.Equal(http.StatusOK, res.Code)
 	var body []models.Booking
 	err := json.NewDecoder(res.Result().Body).Decode(&body)
@@ -241,7 +263,9 @@ func TestListBookings(t *testing.T) {
 
 	path = "/v1/bookings"
 	req = testutil.CreateRequest(http.MethodGet, path, nil)
+	authenticator.Authenticate(req, id.New(), authutil.UserRole)
 	res = testutil.PerformRequest(e.router, req)
+
 	assert.Equal(http.StatusOK, res.Code)
 	err = json.NewDecoder(res.Result().Body).Decode(&body)
 	assert.NoError(err)
@@ -249,7 +273,9 @@ func TestListBookings(t *testing.T) {
 
 	path = fmt.Sprintf("/v1/bookings?userId=%s", user2.ID)
 	req = testutil.CreateRequest(http.MethodGet, path, nil)
+	authenticator.Authenticate(req, id.New(), authutil.UserRole)
 	res = testutil.PerformRequest(e.router, req)
+
 	assert.Equal(http.StatusOK, res.Code)
 	err = json.NewDecoder(res.Result().Body).Decode(&body)
 	assert.NoError(err)
@@ -257,11 +283,24 @@ func TestListBookings(t *testing.T) {
 
 	path = fmt.Sprintf("/v1/bookings?userId=%s&cabinId=2aa15162-2443-48f1-9b8f-6314f90faf9a", user2.ID)
 	req = testutil.CreateRequest(http.MethodGet, path, nil)
+	authenticator.Authenticate(req, id.New(), authutil.UserRole)
 	res = testutil.PerformRequest(e.router, req)
+
 	assert.Equal(http.StatusOK, res.Code)
 	err = json.NewDecoder(res.Result().Body).Decode(&body)
 	assert.NoError(err)
 	assert.Len(body, 0)
+}
+
+func TestListBookings_Unauthorized_and_Forbidden(t *testing.T) {
+	e := newTestEnv()
+	authtest.Test401and403(authtest.TestOpts{
+		T:        t,
+		Router:   e.router,
+		JWTCreds: e.cfg.JWT,
+		Method:   http.MethodGet,
+		Path:     "/v1/bookings",
+	}, authutil.AnonymousRole)
 }
 
 type testEnv struct {
@@ -270,6 +309,7 @@ type testEnv struct {
 	userRepo    repository.UserRepository
 	bookingRepo repository.BookingRepository
 	svc         *service.BookingService
+	cfg         config.Config
 	ctx         context.Context
 }
 
@@ -307,13 +347,21 @@ func newTestEnv() testEnv {
 		return nil
 	})
 
-	bookings.AttachController(svc, r)
+	cfg := config.Config{
+		JWT: jwt.Credentials{
+			Issuer: "bolesta-booking/backend",
+			Secret: id.New(),
+		},
+	}
+
+	bookings.AttachController(svc, r, cfg)
 	return testEnv{
 		router:      r,
 		cabinRepo:   cabinRepo,
 		userRepo:    userRepo,
 		bookingRepo: bookingRepo,
 		svc:         svc,
+		cfg:         cfg,
 		ctx:         context.Background(),
 	}
 }

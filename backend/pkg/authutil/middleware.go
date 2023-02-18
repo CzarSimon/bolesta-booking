@@ -52,7 +52,7 @@ func (m *Middleware) Secure(p Permission) gin.HandlerFunc {
 
 		c.Set(principalKey, user)
 		if !isAllowed(user, p) {
-			err := httputil.Forbiddenf("not allowed due to lack of permission %d", p)
+			err := httputil.Forbiddenf("forbidden, lacks permission: %s", p)
 			c.AbortWithStatusJSON(err.Status, err)
 		}
 
