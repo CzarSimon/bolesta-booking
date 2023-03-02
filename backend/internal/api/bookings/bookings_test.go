@@ -85,14 +85,12 @@ func TestCreateBooking(t *testing.T) {
 		CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
 		StartDate: timeutil.Now(),
 		EndDate:   timeutil.Now().Add(time.Hour),
-		UserID:    user.ID,
-		Password:  correctPassword,
 	}
 
 	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
 
 	req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", bookingReq)
-	authenticator.Authenticate(req, id.New(), authutil.UserRole)
+	authenticator.Authenticate(req, user.ID, authutil.UserRole)
 	res := testutil.PerformRequest(e.router, req)
 
 	assert.Equal(http.StatusOK, res.Code)
@@ -127,7 +125,6 @@ func TestCreateBooking_invalid(t *testing.T) {
 				StartDate: timeutil.Now(),
 				EndDate:   timeutil.Now().Add(time.Hour),
 				UserID:    user.ID,
-				Password:  correctPassword,
 			},
 			status:  http.StatusPreconditionRequired,
 			comment: "Should fail due to invalid cabin id",
@@ -138,7 +135,6 @@ func TestCreateBooking_invalid(t *testing.T) {
 				StartDate: timeutil.Now(),
 				EndDate:   timeutil.Now().Add(time.Hour),
 				UserID:    id.New(),
-				Password:  correctPassword,
 			},
 			status:  http.StatusPreconditionRequired,
 			comment: "Should fail due to invalid user id",
@@ -149,7 +145,6 @@ func TestCreateBooking_invalid(t *testing.T) {
 				StartDate: timeutil.Now().Add(time.Hour),
 				EndDate:   timeutil.Now(),
 				UserID:    user.ID,
-				Password:  correctPassword,
 			},
 			status:  http.StatusBadRequest,
 			comment: "Should fail due to startDate > endDate",
@@ -160,7 +155,6 @@ func TestCreateBooking_invalid(t *testing.T) {
 				StartDate: timeutil.Now(),
 				EndDate:   timeutil.Now().Add(time.Hour),
 				UserID:    user.ID,
-				Password:  correctPassword,
 			},
 			status:  http.StatusBadRequest,
 			comment: "Should fail due to empty cabinId",
@@ -168,43 +162,22 @@ func TestCreateBooking_invalid(t *testing.T) {
 		{
 			req: models.BookingRequest{
 				CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
-				StartDate: timeutil.Now(),
-				EndDate:   timeutil.Now().Add(time.Hour),
-				UserID:    user.ID,
-				Password:  "",
-			},
-			status:  http.StatusBadRequest,
-			comment: "Should fail due to empty password",
-		},
-		{
-			req: models.BookingRequest{
-				CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
 				StartDate: timeutil.Now().Add(-2 * time.Hour),
 				EndDate:   timeutil.Now().Add(-1 * time.Hour),
 				UserID:    user.ID,
-				Password:  correctPassword,
 			},
 			status:  http.StatusBadRequest,
 			comment: "Should fail due to end date being in the past",
-		},
-		{
-			req: models.BookingRequest{
-				CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
-				StartDate: timeutil.Now(),
-				EndDate:   timeutil.Now().Add(time.Hour),
-				UserID:    user.ID,
-				Password:  "this is the wrong password",
-			},
-			status:  http.StatusUnauthorized,
-			comment: "Should fail due to wrong password",
 		},
 	}
 
 	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
 
 	for i, tc := range testCases {
+		userID := tc.req.UserID
+		tc.req.UserID = ""
 		req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", tc.req)
-		authenticator.Authenticate(req, tc.req.UserID, authutil.UserRole)
+		authenticator.Authenticate(req, userID, authutil.UserRole)
 		res := testutil.PerformRequest(e.router, req)
 		assert.Equal(tc.status, res.Code, "Test Case #%d failed: %s", i+1, tc.comment)
 	}
@@ -223,29 +196,28 @@ func TestListBookings(t *testing.T) {
 			StartDate: timeutil.Now(),
 			EndDate:   timeutil.Now().Add(time.Hour),
 			UserID:    user1.ID,
-			Password:  correctPassword,
 		},
 		{
 			CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
 			StartDate: timeutil.Now().Add(2 * time.Hour),
 			EndDate:   timeutil.Now().Add(3 * time.Hour),
 			UserID:    user2.ID,
-			Password:  correctPassword,
 		},
 		{
 			CabinID:   "63e71fef-0037-451f-b731-27249c0164d9",
 			StartDate: timeutil.Now().Add(2 * time.Hour),
 			EndDate:   timeutil.Now().Add(3 * time.Hour),
 			UserID:    user1.ID,
-			Password:  correctPassword,
 		},
 	}
 
 	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
 
 	for i, br := range bookingReqs {
+		userID := br.UserID
+		br.UserID = ""
 		req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", br)
-		authenticator.Authenticate(req, br.UserID, authutil.UserRole)
+		authenticator.Authenticate(req, userID, authutil.UserRole)
 		res := testutil.PerformRequest(e.router, req)
 		assert.Equal(http.StatusOK, res.Code, "Failed to create booking #%d", i+1)
 	}

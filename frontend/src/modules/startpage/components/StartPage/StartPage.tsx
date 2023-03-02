@@ -1,28 +1,29 @@
 import React from "react";
-import { Cabin } from "../../../../types";
+import { BookingCard } from "../../../../components/BookingList/BookingCard";
+import { Booking, Optional } from "../../../../types";
 import { BookingsLink } from "../BookingsLink";
-import { CabinListItem } from "../CabinListItem";
+import { NewBookingLink } from "../NewBookingLink";
 
 import styles from "./StartPage.module.css";
 
 interface Props {
-  cabins: Cabin[];
+  bookings: Booking[];
 }
 
-export function StartPage({ cabins }: Props) {
+export function StartPage({ bookings }: Props) {
+  const nextBooking: Optional<Booking> = bookings.length
+    ? bookings[0]
+    : undefined;
   return (
     <div className={styles.StartPage}>
       <h1 className={styles.Title}>Bölesta booking</h1>
-      <div className={styles.ListTable}>
-        <h2 className={styles.ListTitle}>Stugor</h2>
-        <ul className={styles.CabinList}>
-          {cabins.map((cabin) => (
-            <li key={cabin.id}>
-              <CabinListItem cabin={cabin} />
-            </li>
-          ))}
-        </ul>
-      </div>
+      {nextBooking && (
+        <div>
+          <h3>Nästa bookning</h3>
+          <BookingCard booking={nextBooking} />
+        </div>
+      )}
+      <NewBookingLink />
       <BookingsLink />
     </div>
   );

@@ -1,5 +1,6 @@
 import React from "react";
 import { BookingList } from "../../../../components/BookingList";
+import { NavTitle } from "../../../../components/NavTitle";
 import {
   Booking,
   BookingFilter,
@@ -26,7 +27,7 @@ export function BookingListView({
 }: Props) {
   return (
     <div className={styles.BookingListView}>
-      <h1>Bokningar</h1>
+      <NavTitle title="Bokningar" />
       <BookingFilterSelector
         cabins={cabins}
         users={users}

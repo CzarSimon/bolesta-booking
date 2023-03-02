@@ -20,7 +20,7 @@ export const router = createBrowserRouter([
         element: <BookingListContainer />,
       },
       {
-        path: "cabins/:cabinId",
+        path: "bookings/new",
         element: <BookingViewContainer />,
       },
     ],

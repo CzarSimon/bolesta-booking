@@ -41,7 +41,6 @@ type BookingRequest struct {
 	StartDate time.Time `json:"startDate"`
 	EndDate   time.Time `json:"endDate"`
 	UserID    string    `json:"userId"`
-	Password  string    `json:"password"`
 }
 
 func (r BookingRequest) Valid() error {
@@ -51,10 +50,6 @@ func (r BookingRequest) Valid() error {
 
 	if r.UserID == "" {
 		return fmt.Errorf("UserID cannot be empty")
-	}
-
-	if r.Password == "" {
-		return fmt.Errorf("Password cannot be empty")
 	}
 
 	if r.StartDate.After(r.EndDate) {

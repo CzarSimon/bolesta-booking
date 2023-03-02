@@ -1,5 +1,6 @@
 import { useQuery } from "react-query";
 import { getCabin, getCabins, getUsers, listBookings } from "../api";
+import { useAuth } from "../state/auth/hooks";
 import { Booking, BookingFilter, Cabin, Optional, User } from "../types";
 
 export function useCabin(id: string): Optional<Cabin> {
@@ -21,6 +22,15 @@ export function useBookings(filter?: BookingFilter): Optional<Booking[]> {
   const { data } = useQuery<Booking[], Error>(
     ["bookings", filter?.userId, filter?.cabinId],
     () => listBookings(filter)
+  );
+  return data;
+}
+
+export function useMyBookings(): Optional<Booking[]> {
+  const { user } = useAuth();
+  const { data } = useQuery<Booking[], Error>(
+    ["bookings", user?.id, undefined],
+    () => listBookings({ userId: user?.id })
   );
   return data;
 }

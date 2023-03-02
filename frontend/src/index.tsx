@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router-dom";
 import reportWebVitals from "./reportWebVitals";
 import { router } from "./routers";
 import { AuthProvider } from "./state/auth/AuthProvider";
+import { ThemeProvider } from "./ThemeProvider";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +17,9 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <ThemeProvider>
+          <RouterProvider router={router} />
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>

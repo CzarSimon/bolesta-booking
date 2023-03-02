@@ -1,4 +1,5 @@
-import React, { ChangeEvent, SyntheticEvent, useState } from "react";
+import React, { ChangeEvent, useState } from "react";
+import { Button, Input } from "antd";
 import { ErrorText } from "../../../../components/ErrorText";
 import {
   Failure,
@@ -27,8 +28,7 @@ export function Login({ submit }: Props) {
     setPassword(e.target.value);
   };
 
-  const onSubmit = (e: SyntheticEvent) => {
-    e.preventDefault();
+  const onSubmit = () => {
     parseLoginRequest(email, password)
       .then((req) => submit(req))
       .catch((e) => setErr(e));
@@ -37,29 +37,24 @@ export function Login({ submit }: Props) {
   return (
     <div className={styles.LoginPage}>
       <h1 className={styles.Title}>Bölesta Booking</h1>
-      <h3 className={styles.Details}>Logga in till ditt konto</h3>
-      <form onSubmit={onSubmit}>
-        <label className={styles.FormElement}>
-          <p className={styles.LabelText}>Mailadress</p>
-          <input
-            type="email"
-            onChange={updateEmail}
-            className={styles.InputField}
-          />
-        </label>
-        <label className={styles.FormElement}>
-          <p className={styles.LabelText}>Lösenord</p>
-          <input
-            type="password"
-            onChange={updatePassword}
-            className={styles.InputField}
-          />
-        </label>
-        <button className={styles.FormButton} type="submit">
-          Logga in
-        </button>
-        <ErrorText error={err} />
-      </form>
+      <h2 className={styles.Details}>Logga in</h2>
+      <Input
+        type="email"
+        placeholder="Mailaddress"
+        onChange={updateEmail}
+        size="large"
+        className={styles.FormEmail}
+      />
+      <Input.Password
+        placeholder="Lösenord"
+        onChange={updatePassword}
+        size="large"
+        className={styles.FormPassword}
+      />
+      <Button block type="primary" onClick={onSubmit} size="large">
+        Logga in
+      </Button>
+      <ErrorText error={err} />
       <div className={styles.PoweredBy}>Lindgren & Lundin</div>
     </div>
   );

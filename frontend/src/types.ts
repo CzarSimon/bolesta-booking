@@ -29,8 +29,6 @@ export interface BookingRequest {
   cabinId: string;
   startDate: Date;
   endDate: Date;
-  userId: string;
-  password: string;
 }
 
 export interface BookingFilter {

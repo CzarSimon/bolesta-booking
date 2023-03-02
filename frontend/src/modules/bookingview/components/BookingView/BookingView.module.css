@@ -10,17 +10,8 @@
 }
 
 .FormElement {
+    margin-top: 10px;
     margin-bottom: 10px;
-}
-
-.Select {
-    padding: 5px;
-    margin-bottom: 20px;
-}
-
-.LabelText {
-    margin-top: 0;
-    margin-bottom: 5px;
 }
 
 .InputField {
@@ -29,24 +20,7 @@
 }
 
 .FormButton {
-    padding: 10px;
-    background-color: #ad8258;
-    color: whitesmoke;
-    border-style: none;
-    font-size: medium;
-    font-weight: bold;
-    border-radius: 10px;
     margin-top: 20px;
-}
-
-.FormButton:active {
-    background-color: #ac6a26;
-    cursor: pointer;
-}
-
-.FormButton:hover {
-    background-color: #ac6a26;
-    cursor: pointer;
 }
 
 .CabinName {

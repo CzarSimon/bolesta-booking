@@ -1,21 +1,14 @@
 import React from "react";
-import { useParams } from "react-router-dom";
 import { createBooking } from "../../api";
 import { LoadingIndicator } from "../../components/LoadingIndicator";
-import { useCabin, useUsers } from "../../hooks";
+import { useCabins } from "../../hooks";
 import { BookingView } from "./components/BookingView";
 
 export function BookingViewContainer() {
-  const { cabinId } = useParams();
-  const cabin = useCabin(cabinId!);
-  const users = useUsers();
+  const cabins = useCabins();
 
-  return cabin && users ? (
-    <BookingView
-      cabin={cabin}
-      users={users}
-      handleBookingRequest={createBooking}
-    />
+  return cabins ? (
+    <BookingView cabins={cabins} handleBookingRequest={createBooking} />
   ) : (
     <LoadingIndicator />
   );

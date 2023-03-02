@@ -16,15 +16,23 @@ interface Props {
   items: Item[];
   onChange: (id: string) => void;
   anyOption?: Option;
+  large?: boolean;
 }
 
-export function ItemSelect({ placeholder, items, onChange, anyOption }: Props) {
+export function ItemSelect({
+  placeholder,
+  items,
+  onChange,
+  anyOption,
+  large,
+}: Props) {
   return (
     <Select
       placeholder={placeholder}
       defaultValue={anyOption?.value}
       options={mapItemsToOptions(items, anyOption)}
       onChange={onChange}
+      size={large ? "large" : "middle"}
       allowClear
     />
   );

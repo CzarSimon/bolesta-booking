@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-
-import styles from "./BookingsLink.module.css";
+import { Button } from "antd";
 
 export function BookingsLink() {
   const navigate = useNavigate();
@@ -10,8 +9,8 @@ export function BookingsLink() {
   };
 
   return (
-    <div className={styles.BookingsLink} onClick={toBookings}>
-      <h2>Se bokningar</h2>
-    </div>
+    <Button size="large" block onClick={toBookings}>
+      Se bokningar
+    </Button>
   );
 }

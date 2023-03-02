@@ -42,11 +42,6 @@ func (s *BookingService) CreateBooking(ctx context.Context, req models.BookingRe
 		return models.Booking{}, err
 	}
 
-	err = verifyBookingRequestAccess(ctx, req.Password, user)
-	if err != nil {
-		return models.Booking{}, err
-	}
-
 	booking := models.NewBooking(cabin, user, req.StartDate, req.EndDate)
 
 	err = s.BookingRepo.Save(ctx, booking)
@@ -55,15 +50,6 @@ func (s *BookingService) CreateBooking(ctx context.Context, req models.BookingRe
 	}
 
 	return booking, nil
-}
-
-func verifyBookingRequestAccess(ctx context.Context, password string, user models.User) error {
-	creds := credentials{
-		password: user.Password,
-		salt:     user.Salt,
-	}
-
-	return verify(ctx, password, creds)
 }
 
 func (s *BookingService) mustGetCabin(ctx context.Context, cabinID string) (models.Cabin, error) {

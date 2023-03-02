@@ -1,9 +1,8 @@
-import React, { ChangeEvent, SyntheticEvent, useState } from "react";
-import { Button, DatePicker, Input } from "antd";
+import React, { SyntheticEvent, useState } from "react";
+import { Button, DatePicker } from "antd";
 import { ErrorText } from "../../../../components/ErrorText";
 import {
   Cabin,
-  User,
   BookingRequest,
   Optional,
   Result,
@@ -12,27 +11,22 @@ import {
   Booking,
 } from "../../../../types";
 import { BookingResultModal } from "../BookingResultModal";
-
-import styles from "./BookingView.module.css";
 import { ItemSelect } from "../../../../components/ItemSelect";
 
+import styles from "./BookingView.module.css";
+import { NavTitle } from "../../../../components/NavTitle";
+
 interface Props {
-  cabin: Cabin;
-  users: User[];
+  cabins: Cabin[];
   handleBookingRequest: (req: BookingRequest) => Promise<Booking>;
 }
 
-export function BookingView({ cabin, users, handleBookingRequest }: Props) {
+export function BookingView({ cabins, handleBookingRequest }: Props) {
+  const [cabinId, setCabinId] = useState<Optional<string>>();
   const [from, setFrom] = useState<Optional<Date>>();
   const [to, setTo] = useState<Optional<Date>>();
-  const [userId, setUserId] = useState<Optional<string>>();
-  const [password, setPassword] = useState<Optional<string>>();
   const [err, setErr] = useState<Optional<string>>();
   const [success, setSuccess] = useState<Optional<boolean>>();
-
-  const updatePassword = (e: ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  };
 
   const updateDates = (_: any, dates: [string, string]) => {
     const [fromStr, toStr] = dates;
@@ -42,7 +36,7 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
 
   const onSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
-    parseBookingRequest(cabin, to, from, userId, password)
+    parseBookingRequest(cabinId, to, from)
       .then((r) => {
         setErr(undefined);
         handleBookingRequest(r)
@@ -54,17 +48,20 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
 
   return (
     <div className={styles.BookingView}>
-      <h1 className={styles.CabinName}>{cabin.name}</h1>
+      <NavTitle title="Ny bokning" />
       <div className={styles.BookingForm}>
-        <h2>Välj datum</h2>
-        <DatePicker.RangePicker onChange={updateDates} />
-        <h2>Personliga detaljer</h2>
         <ItemSelect
-          items={users}
-          placeholder="Välj Lundinare"
-          onChange={setUserId}
+          items={cabins}
+          onChange={setCabinId}
+          large
+          placeholder="Välj stuga"
         />
-        <Input.Password placeholder="Lösenord" onChange={updatePassword} />
+        <DatePicker.RangePicker
+          onChange={updateDates}
+          size="large"
+          className={styles.FormElement}
+          placeholder={["Från datum", "Till datum"]}
+        />
         <ErrorText error={err} />
         {success !== undefined ? (
           <BookingResultModal
@@ -72,7 +69,13 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
             onClose={() => setSuccess(undefined)}
           />
         ) : null}
-        <Button type="primary" block onMouseUp={onSubmit}>
+        <Button
+          type="primary"
+          block
+          onMouseUp={onSubmit}
+          size="large"
+          className={styles.FormButton}
+        >
           Boka
         </Button>
       </div>
@@ -81,13 +84,11 @@ export function BookingView({ cabin, users, handleBookingRequest }: Props) {
 }
 
 function parseBookingRequest(
-  cabin: Cabin,
+  cabinId?: string,
   to?: Date,
-  from?: Date,
-  userId?: string,
-  password?: string
+  from?: Date
 ): Result<BookingRequest, string> {
-  if (!to || !from || !userId || !password) {
+  if (!cabinId || !to || !from) {
     return Failure("Alla fält måste fyllas i");
   }
 
@@ -102,8 +103,6 @@ function parseBookingRequest(
   return Success({
     startDate: from,
     endDate: to,
-    cabinId: cabin.id,
-    userId,
-    password,
+    cabinId,
   });
 }

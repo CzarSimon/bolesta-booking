@@ -73,12 +73,18 @@ func (h *controller) createBooking(c *gin.Context) {
 }
 
 func parseBookingRequest(c *gin.Context) (models.BookingRequest, error) {
+	user, err := authutil.MustGetPrincipal(c)
+	if err != nil {
+		return models.BookingRequest{}, err
+	}
+
 	var body models.BookingRequest
-	err := c.BindJSON(&body)
+	err = c.BindJSON(&body)
 	if err != nil {
 		err = httputil.BadRequestf("failed to parse request body. %w", err)
 		return models.BookingRequest{}, err
 	}
+	body.UserID = user.ID
 
 	err = body.Valid()
 	if err != nil {

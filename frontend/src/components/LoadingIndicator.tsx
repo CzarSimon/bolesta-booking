@@ -1,5 +1,6 @@
 import React from "react";
+import { Spin } from "antd";
 
 export function LoadingIndicator() {
-  return <h1>Loading</h1>;
+  return <Spin tip="Sidan laddas" size="large"></Spin>;
 }
