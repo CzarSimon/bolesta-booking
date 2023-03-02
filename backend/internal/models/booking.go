@@ -67,6 +67,16 @@ func (r BookingRequest) String() string {
 	return fmt.Sprintf("BookingRequest(cabinId=%s, userId=%s, startDate=%v, endDate=%v)", r.CabinID, r.UserID, r.StartDate, r.EndDate)
 }
 
+// DeleteBookingRequest request to delete a booking
+type DeleteBookingRequest struct {
+	BookingID string
+	UserID    string
+}
+
+func (r DeleteBookingRequest) String() string {
+	return fmt.Sprintf("DeleteBookingRequest(bookingId=%s, userId=%s)", r.BookingID, r.UserID)
+}
+
 // BookingFilter filter instruction to recive list of bookings
 type BookingFilter struct {
 	CabinID string `json:"cabinId,omitempty"`

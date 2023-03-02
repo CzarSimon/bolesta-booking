@@ -59,12 +59,10 @@ var userRole = role{
 
 var adminRole = role{
 	permissions: map[Permission]bool{
-		ReadBooking:   true,
-		CreateBooking: true,
-		DeleteBooking: true,
-		ReadCabin:     true,
-		ReadUser:      true,
-		CreateUser:    true,
+		ReadBooking: true,
+		ReadCabin:   true,
+		ReadUser:    true,
+		CreateUser:  true,
 	},
 }
 

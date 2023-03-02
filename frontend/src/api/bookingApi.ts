@@ -1,5 +1,5 @@
 import { BASE_URL } from "../constants";
-import { BookingRequest, Booking, BookingFilter } from "../types";
+import { BookingRequest, Booking, BookingFilter, StatusBody } from "../types";
 import { httpclient } from "./httpclient";
 import { wrapAndLogError } from "./util";
 
@@ -29,6 +29,22 @@ export async function listBookings(filter?: BookingFilter): Promise<Booking[]> {
   if (!body) {
     throw wrapAndLogError(
       `failed to fetch bookings with filter=${queryString}`,
+      error,
+      metadata
+    );
+  }
+
+  return body;
+}
+
+export async function deleteBooking(id: string): Promise<StatusBody> {
+  const { body, error, metadata } = await httpclient.delete<StatusBody>({
+    url: `${BASE_URL}/v1/bookings/${id}`,
+  });
+
+  if (!body) {
+    throw wrapAndLogError(
+      `failed to delelete booking booking(id=${id})`,
       error,
       metadata
     );

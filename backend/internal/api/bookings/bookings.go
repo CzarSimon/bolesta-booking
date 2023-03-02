@@ -26,6 +26,7 @@ func AttachController(svc *service.BookingService, r gin.IRouter, cfg config.Con
 	g.POST("", authz.Secure(authutil.CreateBooking), controller.createBooking)
 	g.GET("", authz.Secure(authutil.ReadBooking), controller.listBookings)
 	g.GET("/:id", authz.Secure(authutil.ReadBooking), controller.getBooking)
+	g.DELETE("/:id", authz.Secure(authutil.DeleteBooking), controller.deleteBooking)
 }
 
 func (h *controller) getBooking(c *gin.Context) {
@@ -70,6 +71,29 @@ func (h *controller) createBooking(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, booking)
+}
+
+func (h *controller) deleteBooking(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user, err := authutil.MustGetPrincipal(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	req := models.DeleteBookingRequest{
+		BookingID: c.Param("id"),
+		UserID:    user.ID,
+	}
+
+	err = h.svc.DeleteBooking(ctx, req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	httputil.SendOK(c)
 }
 
 func parseBookingRequest(c *gin.Context) (models.BookingRequest, error) {

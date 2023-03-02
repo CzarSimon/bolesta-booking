@@ -275,6 +275,88 @@ func TestListBookings_Unauthorized_and_Forbidden(t *testing.T) {
 	}, authutil.AnonymousRole)
 }
 
+func TestDeleteBooking(t *testing.T) {
+	assert := assert.New(t)
+	e := newTestEnv()
+
+	user := e.NewUser()
+
+	booking := models.Booking{
+		ID:        id.New(),
+		StartDate: timeutil.Now(),
+		EndDate:   timeutil.Now().Add(time.Hour),
+		CreatedAt: timeutil.Now(),
+		UpdatedAt: timeutil.Now(),
+		Cabin: models.Cabin{
+			ID: "a4b4f496-767e-423e-9816-83b71e1cfa89",
+		},
+		User: user,
+	}
+
+	err := e.bookingRepo.Save(e.ctx, booking)
+	assert.NoError(err)
+	_, found, err := e.bookingRepo.Find(e.ctx, booking.ID)
+	assert.NoError(err)
+	assert.True(found)
+
+	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
+	req := testutil.CreateRequest(http.MethodDelete, fmt.Sprintf("/v1/bookings/%s", booking.ID), nil)
+	authenticator.Authenticate(req, user.ID, authutil.UserRole)
+	res := testutil.PerformRequest(e.router, req)
+
+	assert.Equal(http.StatusOK, res.Code)
+	_, found, err = e.bookingRepo.Find(e.ctx, booking.ID)
+	assert.NoError(err)
+	assert.False(found)
+}
+
+func TestDeleteBooking_wrongUser(t *testing.T) {
+	assert := assert.New(t)
+	e := newTestEnv()
+
+	user := e.NewUser()
+
+	booking := models.Booking{
+		ID:        id.New(),
+		StartDate: timeutil.Now(),
+		EndDate:   timeutil.Now().Add(time.Hour),
+		CreatedAt: timeutil.Now(),
+		UpdatedAt: timeutil.Now(),
+		Cabin: models.Cabin{
+			ID: "a4b4f496-767e-423e-9816-83b71e1cfa89",
+		},
+		User: user,
+	}
+
+	err := e.bookingRepo.Save(e.ctx, booking)
+	assert.NoError(err)
+	_, found, err := e.bookingRepo.Find(e.ctx, booking.ID)
+	assert.NoError(err)
+	assert.True(found)
+
+	otherUser := e.NewUser()
+	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
+	req := testutil.CreateRequest(http.MethodDelete, fmt.Sprintf("/v1/bookings/%s", booking.ID), nil)
+	authenticator.Authenticate(req, otherUser.ID, authutil.UserRole)
+	res := testutil.PerformRequest(e.router, req)
+
+	assert.Equal(http.StatusForbidden, res.Code)
+	_, found, err = e.bookingRepo.Find(e.ctx, booking.ID)
+	assert.NoError(err)
+	assert.True(found)
+}
+
+func TestDeleteBooking_Unauthorized_and_Forbidden(t *testing.T) {
+	e := newTestEnv()
+	authtest.Test401and403(authtest.TestOpts{
+		T:        t,
+		Router:   e.router,
+		JWTCreds: e.cfg.JWT,
+		Method:   http.MethodDelete,
+		Path:     "/v1/bookings/some-id",
+	}, authutil.AnonymousRole, authutil.AdminRole)
+}
+
 type testEnv struct {
 	router      http.Handler
 	cabinRepo   repository.CabinRepository

@@ -41,6 +41,11 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
 export interface AuthenticatedResponse {
   user: User;
   token: string;
@@ -49,6 +54,10 @@ export interface AuthenticatedResponse {
 export interface Client {
   id: string;
   sessionId: string;
+}
+
+export interface StatusBody {
+  status: string;
 }
 
 export class Result<T, E> {

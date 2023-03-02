@@ -173,6 +173,58 @@ func Test_bookingRepo_Find(t *testing.T) {
 	assert.True(errors.Is(err, context.Canceled))
 }
 
+func Test_bookingRepo_Delete(t *testing.T) {
+	assert := assert.New(t)
+	db := testutil.InMemoryDB(true, "../../resources/db/sqlite")
+	userRepo := repository.NewUserRepository(db)
+	cabinRepo := repository.NewCabinRepository(db)
+	bookingRepo := repository.NewBookingRepository(db)
+	ctx := context.Background()
+
+	user := models.User{
+		ID:        id.New(),
+		Name:      "Some Name",
+		Email:     "mail@mail.com",
+		Password:  id.New(),
+		Salt:      id.New(),
+		CreatedAt: timeutil.Now(),
+		UpdatedAt: timeutil.Now(),
+	}
+
+	err := userRepo.Save(ctx, user)
+	assert.NoError(err)
+
+	c1, found, err := cabinRepo.Find(ctx, "a4b4f496-767e-423e-9816-83b71e1cfa89") // Bölestastugan
+	assert.NoError(err)
+	assert.True(found)
+	assert.NotEmpty(c1)
+
+	b1 := models.NewBooking(c1, user, timeutil.Now(), timeutil.Now().Add(24*time.Hour))
+	err = bookingRepo.Save(ctx, b1)
+	assert.NoError(err)
+
+	_, found, err = bookingRepo.Find(ctx, b1.ID)
+	assert.NoError(err)
+	assert.True(found)
+
+	err = bookingRepo.Delete(ctx, b1.ID)
+	assert.NoError(err)
+
+	_, found, err = bookingRepo.Find(ctx, b1.ID)
+	assert.NoError(err)
+	assert.False(found)
+
+	err = bookingRepo.Delete(ctx, id.New())
+	assert.Error(err)
+
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	err = bookingRepo.Delete(ctx, b1.ID)
+	assert.Error(err)
+	assert.True(errors.Is(err, context.Canceled))
+}
+
 func Test_bookingRepo_FindByFilter(t *testing.T) {
 	assert := assert.New(t)
 	db := testutil.InMemoryDB(true, "../../resources/db/sqlite")

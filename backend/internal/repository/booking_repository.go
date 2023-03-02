@@ -16,6 +16,7 @@ type BookingRepository interface {
 	Save(ctx context.Context, booking models.Booking) error
 	Find(ctx context.Context, id string) (models.Booking, bool, error)
 	FindByFilter(ctx context.Context, f models.BookingFilter) ([]models.Booking, error)
+	Delete(ctx context.Context, id string) error
 }
 
 func NewBookingRepository(db *sql.DB) BookingRepository {
@@ -107,6 +108,41 @@ func (r *bookingRepo) Save(ctx context.Context, booking models.Booking) error {
 	err = tx.Commit()
 	if err != nil {
 		return fmt.Errorf("failed to commit transaction when inserting %s: %w", booking, err)
+	}
+
+	return nil
+}
+
+const deleteBookingByIDQuery = "DELETE FROM booking WHERE id = ?"
+
+func (r *bookingRepo) Delete(ctx context.Context, id string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction%w", err)
+	}
+	defer dbutil.Rollback(tx)
+
+	res, err := tx.ExecContext(
+		ctx,
+		deleteBookingByIDQuery,
+		id,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete booking(id=%s): %w", id, err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected for booking(id=%s) deletion: %w", id, err)
+	}
+
+	if rowsAffected != 1 {
+		return fmt.Errorf("failed to delete booking(id=%s) unexpected number of rows affected. Expected 1 got %d", id, rowsAffected)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction when deleting booking(id=%s): %w", id, err)
 	}
 
 	return nil

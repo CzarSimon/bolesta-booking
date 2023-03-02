@@ -1,16 +1,18 @@
 import React from "react";
 import { BookingCard } from "../../../../components/BookingList/BookingCard";
-import { Booking, Optional } from "../../../../types";
+import { Booking, Optional, User } from "../../../../types";
 import { BookingsLink } from "../BookingsLink";
 import { NewBookingLink } from "../NewBookingLink";
+import { ProfileLink } from "../ProfileLink";
 
 import styles from "./StartPage.module.css";
 
 interface Props {
+  user: User;
   bookings: Booking[];
 }
 
-export function StartPage({ bookings }: Props) {
+export function StartPage({ user, bookings }: Props) {
   const nextBooking: Optional<Booking> = bookings.length
     ? bookings[0]
     : undefined;
@@ -25,6 +27,7 @@ export function StartPage({ bookings }: Props) {
       )}
       <NewBookingLink />
       <BookingsLink />
+      <ProfileLink user={user} />
     </div>
   );
 }

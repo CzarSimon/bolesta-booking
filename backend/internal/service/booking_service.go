@@ -52,6 +52,24 @@ func (s *BookingService) CreateBooking(ctx context.Context, req models.BookingRe
 	return booking, nil
 }
 
+func (s *BookingService) DeleteBooking(ctx context.Context, req models.DeleteBookingRequest) error {
+	_, err := s.mustGetUser(ctx, req.UserID)
+	if err != nil {
+		return err
+	}
+
+	booking, err := s.mustGetBooking(ctx, req.BookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.User.ID != req.UserID {
+		return httputil.Forbiddenf("User(id=%s) does not own Booking(id=%s)", req.UserID, req.BookingID)
+	}
+
+	return s.BookingRepo.Delete(ctx, req.BookingID)
+}
+
 func (s *BookingService) mustGetCabin(ctx context.Context, cabinID string) (models.Cabin, error) {
 	cabin, exists, err := s.CabinRepo.Find(ctx, cabinID)
 	if err != nil {
@@ -76,4 +94,17 @@ func (s *BookingService) mustGetUser(ctx context.Context, cabinID string) (model
 	}
 
 	return user, nil
+}
+
+func (s *BookingService) mustGetBooking(ctx context.Context, bookingID string) (models.Booking, error) {
+	booking, exists, err := s.BookingRepo.Find(ctx, bookingID)
+	if err != nil {
+		return models.Booking{}, err
+	}
+
+	if !exists {
+		return models.Booking{}, httputil.PreconditionRequiredError(err)
+	}
+
+	return booking, nil
 }
