@@ -13,13 +13,11 @@ on:
 
 env:
   SERVER_HOST: booking.xn--blesta-wxa.se
-  AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
-  AWS_DEFAULT_REGION: fr-par
 
 jobs:
   security-scan:
     name: security-scan
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,6 +43,16 @@ jobs:
       - name: build application
         run: npm run build
         working-directory: frontend
+      - uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks --delete
+        env:
+          AWS_S3_BUCKET: "bolesta-booking-frontend"
+          AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          AWS_S3_ENDPOINT: "https://s3.fr-par.scw.cloud"
+          AWS_REGION: "fr-par"
+          SOURCE_DIR: "public"
 
   rsync-deployment-files:
     name: rsync-deployment-files
