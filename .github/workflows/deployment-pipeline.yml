@@ -35,16 +35,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: upload built application
-        uses: jakejarvis/s3-sync-action@master
-        with:
-          args: --acl public-read --follow-symlinks --delete
+        working-directory: frontend
         env:
-          AWS_S3_BUCKET: "bolesta-booking-frontend"
+          AWS_REGION: "fr-par"
           AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
-          AWS_S3_ENDPOINT: "https://s3.fr-par.scw.cloud"
-          AWS_REGION: "fr-par"
-          SOURCE_DIR: "frontend/public"
+        run: |
+          aws s3 sync \
+            ./public \
+            s3://bolesta-booking-frontend \
+            --endpoint-url https://s3.fr-par.scw.cloud \
+            --acl public-read
       - uses: actions/setup-node@v1
         with:
           node-version: 16.16.0
