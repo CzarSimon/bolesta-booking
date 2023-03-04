@@ -38,8 +38,8 @@ jobs:
         working-directory: frontend
         env:
           AWS_REGION: "fr-par"
-          AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.SCW_FE_UPLOAD_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_FE_UPLOAD_SECRET_KEY }}
         run: |
           aws s3 sync \
             ./public \
@@ -53,6 +53,8 @@ jobs:
         run: npm ci
         working-directory: frontend
       - name: build application
+        env:
+          BASE_URL: "https://booking.bölesta.se/api"
         run: npm run build
         working-directory: frontend
       - name: upload built application
