@@ -11,6 +11,7 @@ RUN go mod download
 # Build application.
 COPY cmd/server cmd
 COPY internal internal
+COPY pkg pkg
 COPY resources resources
 WORKDIR /app/bolesta-booking/backend/cmd
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o server
