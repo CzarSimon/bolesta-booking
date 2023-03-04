@@ -40,9 +40,13 @@ jobs:
         with:
           node-version: 16.16.0
       - name: install dependencies
-        run: npm ci
+        run: |
+          ls
+          npm ci
+        working-directory: infrastructure
       - name: build application
         run: npm run build
+        working-directory: infrastructure
 
   rsync-deployment-files:
     name: rsync-deployment-files
