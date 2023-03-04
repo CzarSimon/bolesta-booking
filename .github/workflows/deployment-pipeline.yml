@@ -53,8 +53,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
           AWS_S3_ENDPOINT: "https://s3.fr-par.scw.cloud"
           AWS_REGION: "fr-par"
-          SOURCE_DIR: "public"
-        working-directory: frontend
+          SOURCE_DIR: "../frontend/public"
 
   rsync-deployment-files:
     name: rsync-deployment-files
