@@ -17,7 +17,6 @@ env:
 jobs:
   security-scan:
     name: security-scan
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -32,6 +31,8 @@ jobs:
   build-and-upload-frontend:
     name: build-and-upload-frontend
     runs-on: ubuntu-latest
+    needs:
+      - security-scan
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -89,6 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - rsync-deployment-files
+      - build-and-upload-frontend
     steps:
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v0.1.6
