@@ -41,13 +41,6 @@ func Test_userRepo_Save(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(1, rowCount)
 
-	err = repo.Save(ctx, u1)
-	assert.Error(err)
-
-	err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_account").Scan(&rowCount)
-	assert.NoError(err)
-	assert.Equal(1, rowCount)
-
 	u2 := models.User{
 		ID:        id.New(),
 		Name:      "Some Other",
@@ -59,7 +52,7 @@ func Test_userRepo_Save(t *testing.T) {
 	}
 
 	err = repo.Save(ctx, u2)
-	assert.Error(err)
+	assert.Error(err) // Should faild due to non unique password
 
 	err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_account").Scan(&rowCount)
 	assert.NoError(err)
@@ -69,12 +62,13 @@ func Test_userRepo_Save(t *testing.T) {
 	u2.Salt = u1.Salt
 
 	err = repo.Save(ctx, u2)
-	assert.Error(err)
+	assert.Error(err) // Should faild due to non unique password
 
 	err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_account").Scan(&rowCount)
 	assert.NoError(err)
 	assert.Equal(1, rowCount)
 
+	u2.ID = id.New()
 	u2.Salt = id.New()
 
 	err = repo.Save(ctx, u2)
@@ -83,6 +77,26 @@ func Test_userRepo_Save(t *testing.T) {
 	err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_account").Scan(&rowCount)
 	assert.NoError(err)
 	assert.Equal(2, rowCount)
+
+	u1.Email = "new@email.com"
+	u1.Password = "new password"
+	u1.Salt = "new salt"
+
+	err = repo.Save(ctx, u1)
+	assert.NoError(err)
+
+	err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_account").Scan(&rowCount)
+	assert.NoError(err)
+	assert.Equal(2, rowCount)
+
+	storedU1, found, err := repo.Find(ctx, u1.ID)
+	assert.NoError(err)
+	assert.True(found)
+	assert.Equal(u1.Email, storedU1.Email)
+	assert.Equal(u1.Salt, storedU1.Salt)
+	assert.Equal(u1.Password, storedU1.Password)
+	assert.Equal(u1.CreatedAt, storedU1.CreatedAt)
+	assert.NotEqual(u1.UpdatedAt, storedU1.UpdatedAt)
 
 	ctx, cancel := context.WithCancel(ctx)
 	cancel()

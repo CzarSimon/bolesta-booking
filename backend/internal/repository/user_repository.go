@@ -7,6 +7,7 @@ import (
 
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/httputil/dbutil"
+	"github.com/CzarSimon/httputil/timeutil"
 )
 
 type UserRepository interface {
@@ -26,14 +27,67 @@ type userRepo struct {
 	db *sql.DB
 }
 
-const saveUserQuery = `
-	INSERT OR REPLACE INTO user_account(id, name, email, password, salt, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+func (r *userRepo) Save(ctx context.Context, user models.User) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction%w", err)
+	}
+
+	existing, found, err := findUser(ctx, tx, user.ID)
+	if err != nil {
+		dbutil.Rollback(tx)
+		return err
+	}
+
+	if found {
+		err = updateUser(ctx, tx, user, existing)
+	} else {
+		err = saveNewUser(ctx, tx, user)
+	}
+
+	if err != nil {
+		dbutil.Rollback(tx)
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		dbutil.Rollback(tx)
+		return fmt.Errorf("failed to commit transaction when saving user(id=%s): %w", user.ID, err)
+	}
+
+	return nil
+}
+
+const saveNewUserQuery = `
+	INSERT INTO user_account(id, name, email, password, salt, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
-func (r *userRepo) Save(ctx context.Context, user models.User) error {
-	_, err := r.db.ExecContext(ctx, saveUserQuery, user.ID, user.Name, user.Email, user.Password, user.Salt, user.CreatedAt, user.UpdatedAt)
+func saveNewUser(ctx context.Context, tx *sql.Tx, user models.User) error {
+	_, err := tx.ExecContext(ctx, saveNewUserQuery, user.ID, user.Name, user.Email, user.Password, user.Salt, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("failed to insert %s into user_account: %w", user, err)
+	}
+
+	return nil
+}
+
+const updateUserQuery = `
+	UPDATE
+		user_account
+	SET
+		email = ?,
+		password = ?,
+		salt = ?,
+		updated_at = ?
+	WHERE
+		id = ?
+`
+
+func updateUser(ctx context.Context, tx *sql.Tx, update, existing models.User) error {
+	_, err := tx.ExecContext(ctx, updateUserQuery, update.Email, update.Password, update.Salt, timeutil.Now(), existing.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update user_account. Existing=%s, Update=%s: %w", existing, update, err)
 	}
 
 	return nil

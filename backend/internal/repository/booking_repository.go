@@ -76,7 +76,6 @@ func (r *bookingRepo) Save(ctx context.Context, booking models.Booking) error {
 	if err != nil {
 		return fmt.Errorf("failed to start transaction%w", err)
 	}
-	defer dbutil.Rollback(tx)
 
 	res, err := tx.ExecContext(
 		ctx,
@@ -93,20 +92,24 @@ func (r *bookingRepo) Save(ctx context.Context, booking models.Booking) error {
 		booking.EndDate,   // End date must be before existing booking
 	)
 	if err != nil {
+		dbutil.Rollback(tx)
 		return fmt.Errorf("failed to insert %s into booking: %w", booking, err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		dbutil.Rollback(tx)
 		return fmt.Errorf("failed to get rows affected for booking %s: %w", booking, err)
 	}
 
 	if rowsAffected < 1 {
+		dbutil.Rollback(tx)
 		return httputil.Conflictf("failed to insert %s due to conflicting existing boooking", booking)
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		dbutil.Rollback(tx)
 		return fmt.Errorf("failed to commit transaction when inserting %s: %w", booking, err)
 	}
 
@@ -120,7 +123,6 @@ func (r *bookingRepo) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return fmt.Errorf("failed to start transaction%w", err)
 	}
-	defer dbutil.Rollback(tx)
 
 	res, err := tx.ExecContext(
 		ctx,
@@ -128,20 +130,24 @@ func (r *bookingRepo) Delete(ctx context.Context, id string) error {
 		id,
 	)
 	if err != nil {
+		dbutil.Rollback(tx)
 		return fmt.Errorf("failed to delete booking(id=%s): %w", id, err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		dbutil.Rollback(tx)
 		return fmt.Errorf("failed to get rows affected for booking(id=%s) deletion: %w", id, err)
 	}
 
 	if rowsAffected != 1 {
+		dbutil.Rollback(tx)
 		return fmt.Errorf("failed to delete booking(id=%s) unexpected number of rows affected. Expected 1 got %d", id, rowsAffected)
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		dbutil.Rollback(tx)
 		return fmt.Errorf("failed to commit transaction when deleting booking(id=%s): %w", id, err)
 	}
 
