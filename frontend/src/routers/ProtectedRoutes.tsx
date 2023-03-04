@@ -12,7 +12,7 @@ export function ProtectedRoutes() {
     if (!user && !authenticated) {
       navigate("/login");
     }
-  }, [authenticated]);
+  }, [authenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <Outlet />;
 }

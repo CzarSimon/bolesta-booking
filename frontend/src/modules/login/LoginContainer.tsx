@@ -11,6 +11,6 @@ export function LoginContainer() {
     if (authenticated) {
       navigate("/");
     }
-  }, [authenticated]);
+  }, [authenticated]); // eslint-disable-line react-hooks/exhaustive-deps
   return <Login submit={login} />;
 }

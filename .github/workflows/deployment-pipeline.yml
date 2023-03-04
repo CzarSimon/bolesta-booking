@@ -40,9 +40,7 @@ jobs:
         with:
           node-version: 16.16.0
       - name: install dependencies
-        run: |
-          ls
-          npm ci
+        run: npm ci
         working-directory: frontend
       - name: build application
         run: npm run build

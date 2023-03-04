@@ -90,6 +90,7 @@ interface TokenBody {
 }
 
 function parseToken(token: string): TokenBody {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alg, body, sig] = token.split(".");
   const decodedBody = atob(body);
   return JSON.parse(decodedBody);
