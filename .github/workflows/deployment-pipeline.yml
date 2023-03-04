@@ -43,10 +43,10 @@ jobs:
         run: |
           ls
           npm ci
-        working-directory: infrastructure
+        working-directory: frontend
       - name: build application
         run: npm run build
-        working-directory: infrastructure
+        working-directory: frontend
 
   rsync-deployment-files:
     name: rsync-deployment-files
