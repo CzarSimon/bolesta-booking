@@ -7,6 +7,7 @@ import (
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/repository"
 	"github.com/CzarSimon/httputil"
+	"github.com/CzarSimon/httputil/timeutil"
 )
 
 type UserService struct {
@@ -48,4 +49,30 @@ func (s *UserService) GetUsers(ctx context.Context) ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (s *UserService) ChangePassword(ctx context.Context, req models.ChangePasswordRequest) error {
+	user, exits, err := s.UserRepo.Find(ctx, req.UserID)
+	if err != nil {
+		return err
+	}
+	if !exits {
+		return httputil.PreconditionRequiredError(err)
+	}
+
+	err = verify(ctx, req.OldPassword, getCredentials(user))
+	if err != nil {
+		return err
+	}
+
+	creds, err := hash(ctx, req.NewPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	user.Password = creds.password
+	user.Salt = creds.salt
+	user.UpdatedAt = timeutil.Now()
+
+	return s.UserRepo.Save(ctx, user)
 }

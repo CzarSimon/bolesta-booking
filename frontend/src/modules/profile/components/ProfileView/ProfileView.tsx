@@ -2,19 +2,19 @@ import React, { useState } from "react";
 import { EditOutlined } from "@ant-design/icons";
 import { Button, Descriptions } from "antd";
 import { NavTitle } from "../../../../components/NavTitle";
-import { User } from "../../../../types";
+import { ChangePasswordRequest, User } from "../../../../types";
+import { ChangePasswordForm } from "../ChangePasswordForm";
 
 import styles from "./ProfileView.module.css";
-import { ChangePasswordForm } from "../ChangePasswordForm";
 
 interface Props {
   user: User;
   logout: () => void;
+  changePassword: (req: ChangePasswordRequest) => Promise<void>;
 }
 
-export function ProfileView({ user, logout }: Props) {
+export function ProfileView({ user, logout, changePassword }: Props) {
   const [changePasswordOpen, setChangePasswordOpen] = useState<Boolean>(false);
-  const chpwd = () => {};
 
   return (
     <div className={styles.Content}>
@@ -34,7 +34,12 @@ export function ProfileView({ user, logout }: Props) {
           Ändra lösenord
         </Button>
       )}
-      {changePasswordOpen && <ChangePasswordForm submit={chpwd} />}
+      {changePasswordOpen && (
+        <ChangePasswordForm
+          submit={changePassword}
+          close={() => setChangePasswordOpen(false)}
+        />
+      )}
       <Button
         type="text"
         size="large"

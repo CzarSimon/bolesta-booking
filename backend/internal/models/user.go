@@ -65,3 +65,35 @@ func (r CreateUserRequest) User(password, salt string) User {
 		UpdatedAt: now,
 	}
 }
+
+// ChangePasswordRequest
+type ChangePasswordRequest struct {
+	UserID          string `json:"-"`
+	OldPassword     string `json:"oldPassword"`
+	NewPassword     string `json:"newPassword"`
+	ConfirmPassword string `json:"confirmPassword"`
+}
+
+func (r ChangePasswordRequest) Valid() error {
+	if r.UserID == "" {
+		return fmt.Errorf("user id cannot be empty")
+	}
+
+	if r.OldPassword == "" {
+		return fmt.Errorf("old password cannot be empty")
+	}
+
+	if len(r.NewPassword) < 8 {
+		return fmt.Errorf("password must be longer than 8 characters")
+	}
+
+	if r.NewPassword != r.ConfirmPassword {
+		return fmt.Errorf("the passwords do not match")
+	}
+
+	return nil
+}
+
+func (r ChangePasswordRequest) String() string {
+	return fmt.Sprintf("ChangePasswordRequest(userId=%s)", r.UserID)
+}

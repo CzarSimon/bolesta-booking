@@ -32,6 +32,7 @@ const (
 	ReadCabin
 	ReadUser
 	CreateUser
+	UpdateUser
 )
 
 type role struct {
@@ -54,6 +55,7 @@ var userRole = role{
 		DeleteBooking: true,
 		ReadCabin:     true,
 		ReadUser:      true,
+		UpdateUser:    true,
 	},
 }
 

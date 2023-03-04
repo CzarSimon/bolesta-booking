@@ -27,7 +27,7 @@ type userRepo struct {
 }
 
 const saveUserQuery = `
-	INSERT INTO user_account(id, name, email, password, salt, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+	INSERT OR REPLACE INTO user_account(id, name, email, password, salt, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 func (r *userRepo) Save(ctx context.Context, user models.User) error {

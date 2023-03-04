@@ -26,12 +26,13 @@ func AttachController(svc *service.UserService, r gin.IRouter, cfg config.Config
 	authz := authutil.NewMiddleware(cfg.JWT)
 	g := r.Group("/v1/users")
 
-	g.GET("", authz.Secure(authutil.ReadUser), controller.GetUsers)
-	g.POST("", controller.CreateUser)
-	g.GET("/:id", authz.Secure(authutil.ReadUser), controller.GetUser)
+	g.GET("", authz.Secure(authutil.ReadUser), controller.getUsers)
+	g.POST("", controller.createUser)
+	g.GET("/:id", authz.Secure(authutil.ReadUser), controller.getUser)
+	g.PUT("/:id/password", authz.Secure(authutil.UpdateUser), controller.changePassword)
 }
 
-func (h *controller) GetUser(c *gin.Context) {
+func (h *controller) getUser(c *gin.Context) {
 	ctx := c.Request.Context()
 	id := c.Param("id")
 
@@ -44,7 +45,7 @@ func (h *controller) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (h *controller) GetUsers(c *gin.Context) {
+func (h *controller) getUsers(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	users, err := h.svc.GetUsers(ctx)
@@ -56,7 +57,7 @@ func (h *controller) GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-func (h *controller) CreateUser(c *gin.Context) {
+func (h *controller) createUser(c *gin.Context) {
 	ctx := c.Request.Context()
 	if !h.enableCreateUsers {
 		c.Error(httputil.Forbiddenf("Creating users is not enabled"))
@@ -78,6 +79,24 @@ func (h *controller) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+func (h *controller) changePassword(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	req, err := parseChangePasswordRequest(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = h.svc.ChangePassword(ctx, req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	httputil.SendOK(c)
+}
+
 func parseCreateUserRequest(c *gin.Context) (models.CreateUserRequest, error) {
 	var body models.CreateUserRequest
 	err := c.BindJSON(&body)
@@ -90,6 +109,29 @@ func parseCreateUserRequest(c *gin.Context) (models.CreateUserRequest, error) {
 	if err != nil {
 		err = httputil.BadRequestf("invalid %s. %w", body, err)
 		return models.CreateUserRequest{}, err
+	}
+
+	return body, nil
+}
+
+func parseChangePasswordRequest(c *gin.Context) (models.ChangePasswordRequest, error) {
+	principal, err := authutil.MustGetPrincipal(c)
+	if err != nil {
+		return models.ChangePasswordRequest{}, err
+	}
+
+	var body models.ChangePasswordRequest
+	err = c.BindJSON(&body)
+	if err != nil {
+		err = httputil.BadRequestf("failed to parse request body. %w", err)
+		return models.ChangePasswordRequest{}, err
+	}
+	body.UserID = principal.ID
+
+	err = body.Valid()
+	if err != nil {
+		err = httputil.BadRequestf("invalid %s. %w", body, err)
+		return models.ChangePasswordRequest{}, err
 	}
 
 	return body, nil

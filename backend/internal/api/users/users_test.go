@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CzarSimon/bolesta-booking/backend/internal/api/auth"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/api/users"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/config"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
@@ -162,6 +163,65 @@ func TestCreateUser(t *testing.T) {
 	assert.Equal(body, getBody)
 }
 
+func TestChangePassword(t *testing.T) {
+	assert := assert.New(t)
+	router, userRep, cfg := setupRouter(true)
+
+	ur := models.CreateUserRequest{
+		Name:     "Some Name",
+		Email:    "mail@mail.com",
+		Password: id.New(),
+	}
+
+	newPassword := id.New()
+	chReq := models.ChangePasswordRequest{
+		OldPassword:     ur.Password,
+		NewPassword:     newPassword,
+		ConfirmPassword: newPassword,
+	}
+
+	req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/users", ur)
+	res := testutil.PerformRequest(router, req)
+	assert.Equal(http.StatusOK, res.Code)
+
+	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/login", models.LoginRequest{
+		Email:    ur.Email,
+		Password: ur.Password,
+	})
+	res = testutil.PerformRequest(router, req)
+	assert.Equal(http.StatusOK, res.Code)
+
+	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/login", models.LoginRequest{
+		Email:    ur.Email,
+		Password: chReq.NewPassword,
+	})
+	res = testutil.PerformRequest(router, req)
+	assert.Equal(http.StatusUnauthorized, res.Code)
+
+	user, found, err := userRep.UserRepo.FindByEmail(context.Background(), ur.Email)
+	assert.NoError(err)
+	assert.True(found)
+
+	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPut, fmt.Sprintf("/v1/users/%s/password", user.ID), chReq)
+	authtest.Authenticate(req, user.ID, authutil.UserRole, cfg.JWT)
+	res = testutil.PerformRequest(router, req)
+	assert.Equal(http.StatusOK, res.Code)
+
+	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/login", models.LoginRequest{
+		Email:    ur.Email,
+		Password: chReq.NewPassword,
+	})
+	res = testutil.PerformRequest(router, req)
+	assert.Equal(http.StatusOK, res.Code)
+
+	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/login", models.LoginRequest{
+		Email:    ur.Email,
+		Password: chReq.OldPassword,
+	})
+	res = testutil.PerformRequest(router, req)
+	assert.Equal(http.StatusUnauthorized, res.Code)
+}
+
 func TestCreateUser_notEnabled(t *testing.T) {
 	assert := assert.New(t)
 	router, _, _ := setupRouter(false)
@@ -252,7 +312,7 @@ func TestCreateUser_invalid(t *testing.T) {
 func setupRouter(enableCreateUsers bool) (http.Handler, *service.UserService, config.Config) {
 	db := testutil.InMemoryDB(true, "../../../resources/db/sqlite")
 	repo := repository.NewUserRepository(db)
-	svc := &service.UserService{
+	userSvc := &service.UserService{
 		UserRepo: repo,
 	}
 
@@ -268,6 +328,12 @@ func setupRouter(enableCreateUsers bool) (http.Handler, *service.UserService, co
 		},
 	}
 
-	users.AttachController(svc, r, cfg)
-	return r, svc, cfg
+	authSvc := &service.AuthService{
+		UserRepo: repo,
+		Issuer:   jwt.NewIssuer(cfg.JWT),
+	}
+
+	users.AttachController(userSvc, r, cfg)
+	auth.AttachController(authSvc, r)
+	return r, userSvc, cfg
 }

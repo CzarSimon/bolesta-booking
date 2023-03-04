@@ -12,10 +12,11 @@ import {
 import styles from "./ChangePasswordForm.module.css";
 
 interface Props {
-  submit: (req: ChangePasswordRequest) => void;
+  close: () => void;
+  submit: (req: ChangePasswordRequest) => Promise<void>;
 }
 
-export function ChangePasswordForm({ submit }: Props) {
+export function ChangePasswordForm({ submit, close }: Props) {
   const [oldPassword, setOldPassword] = useState<Optional<string>>();
   const [newPassword, setNewPassword] = useState<Optional<string>>();
   const [confirmPassword, setConfirmPassword] = useState<Optional<string>>();
@@ -35,7 +36,14 @@ export function ChangePasswordForm({ submit }: Props) {
 
   const onSubmit = () => {
     parseChangeRequest(oldPassword, newPassword, confirmPassword)
-      .then((req) => submit(req))
+      .then((req) => {
+        submit(req)
+          .then(() => {
+            setErr(undefined);
+            close();
+          })
+          .catch((e) => setErr("Något gick fel"));
+      })
       .catch((e) => setErr(e));
   };
 
@@ -76,6 +84,10 @@ function parseChangeRequest(
     return Failure("Alla fält måste fyllas i");
   }
 
+  if (newPassword.length < 8) {
+    return Failure("Lösenordet måste vara mer än 8 tecken!");
+  }
+
   if (newPassword !== confirmPassword) {
     return Failure("Lösenorden stämmer inte överens");
   }
@@ -83,5 +95,6 @@ function parseChangeRequest(
   return Success({
     oldPassword,
     newPassword,
+    confirmPassword,
   });
 }
