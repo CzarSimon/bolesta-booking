@@ -9,6 +9,7 @@ on:
     paths:
       - infrastructure/docker-compose.yml
       - infrastructure/nginx.conf
+      - fronend
       - .github/workflows/deployment-pipeline.yml
 
 env:
@@ -44,7 +45,7 @@ jobs:
         working-directory: frontend
       - name: build application
         env:
-          BASE_URL: "https://booking.bölesta.se/api"
+          REACT_APP_BASE_URL: "/api"
         run: npm run build
         working-directory: frontend
       - name: upload built application
