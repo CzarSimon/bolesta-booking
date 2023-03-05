@@ -29,8 +29,10 @@ resource "scaleway_object_bucket" "frontend" {
 resource "scaleway_object_bucket_website_configuration" "frontend_website" {
   bucket = scaleway_object_bucket.frontend.name
   index_document {
-    suffix         = "index.html"
-    error_document = "index.html"
+    suffix = "index.html"
+  }
+  error_document {
+    key = "index.html"
   }
 }
 
