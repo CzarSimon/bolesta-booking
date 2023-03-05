@@ -61,6 +61,7 @@ export function BookingView({ cabins, handleBookingRequest }: Props) {
           size="large"
           className={styles.FormElement}
           placeholder={["Från datum", "Till datum"]}
+          inputReadOnly
         />
         <ErrorText error={err} />
         {success !== undefined ? (
