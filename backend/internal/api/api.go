@@ -49,6 +49,7 @@ func Start(cfg config.Config) {
 		CabinRepo: cabinRepo,
 	}
 	bookingSvc := &service.BookingService{
+		Rules:       cfg.BookingRules,
 		UserRepo:    userRepo,
 		CabinRepo:   cabinRepo,
 		BookingRepo: bookingRepo,

@@ -1,15 +1,21 @@
 package bookings
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/CzarSimon/bolesta-booking/backend/internal/config"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
 	"github.com/CzarSimon/bolesta-booking/backend/pkg/authutil"
 	"github.com/CzarSimon/httputil"
+	"github.com/CzarSimon/httputil/logger"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
+
+var log = logger.GetDefaultLogger("internal/api/bookings")
 
 // Controller http handler for cabins
 type controller struct {
@@ -66,6 +72,7 @@ func (h *controller) createBooking(c *gin.Context) {
 
 	booking, err := h.svc.CreateBooking(ctx, req)
 	if err != nil {
+		encodeBookingRuleViolation(c, err)
 		c.Error(err)
 		return
 	}
@@ -96,6 +103,16 @@ func (h *controller) deleteBooking(c *gin.Context) {
 	httputil.SendOK(c)
 }
 
+func encodeBookingRuleViolation(c *gin.Context, err error) {
+	var violation models.BookingRuleViloation
+	ok := errors.As(err, &violation)
+	if !ok {
+		return
+	}
+
+	c.Header("X-Booking-Rule-Violation", strconv.Itoa(int(violation)))
+}
+
 func parseBookingRequest(c *gin.Context) (models.BookingRequest, error) {
 	user, err := authutil.MustGetPrincipal(c)
 	if err != nil {
@@ -109,6 +126,7 @@ func parseBookingRequest(c *gin.Context) (models.BookingRequest, error) {
 		return models.BookingRequest{}, err
 	}
 	body.UserID = user.ID
+	body.DryRun = getBoolQuery(c, "dry-run", false)
 
 	err = body.Valid()
 	if err != nil {
@@ -124,4 +142,23 @@ func parseBookingFilter(c *gin.Context) models.BookingFilter {
 		CabinID: c.Query("cabinId"),
 		UserID:  c.Query("userId"),
 	}
+}
+
+func getBoolQuery(c *gin.Context, key string, defaultValue bool) bool {
+	str, ok := c.GetQuery(key)
+	if !ok {
+		return defaultValue
+	}
+
+	val, err := strconv.ParseBool(str)
+	if err != nil {
+		log.Warn(
+			"failed to parse query param as boolean",
+			zap.String("value", str),
+			zap.String("key", key),
+			zap.Error(err),
+		)
+	}
+
+	return val
 }

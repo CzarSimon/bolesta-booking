@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -89,7 +90,7 @@ func TestCreateBooking(t *testing.T) {
 
 	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
 
-	req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", bookingReq)
+	req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings?dry-run=true", bookingReq)
 	authenticator.Authenticate(req, user.ID, authutil.UserRole)
 	res := testutil.PerformRequest(e.router, req)
 
@@ -104,6 +105,118 @@ func TestCreateBooking(t *testing.T) {
 	user.Password = ""
 	user.Salt = ""
 	assert.Equal(user, body.User)
+
+	_, found, err := e.bookingRepo.Find(e.ctx, body.ID)
+	assert.NoError(err)
+	assert.False(found)
+
+	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/bookings", bookingReq)
+	authenticator.Authenticate(req, user.ID, authutil.UserRole)
+	res = testutil.PerformRequest(e.router, req)
+
+	assert.Equal(http.StatusOK, res.Code)
+
+	err = json.NewDecoder(res.Result().Body).Decode(&body)
+	assert.NoError(err)
+	assert.Equal(bookingReq.CabinID, body.Cabin.ID)
+	assert.Equal(bookingReq.StartDate, body.StartDate)
+	assert.Equal(bookingReq.EndDate, body.EndDate)
+	user.Password = ""
+	user.Salt = ""
+	assert.Equal(user, body.User)
+
+	_, found, err = e.bookingRepo.Find(e.ctx, body.ID)
+	assert.NoError(err)
+	assert.True(found)
+}
+
+func TestCreateBooking_CheckRules(t *testing.T) {
+	assert := assert.New(t)
+	e := newTestEnv()
+
+	user := e.NewUser()
+
+	type testCase struct {
+		status     int
+		req        models.BookingRequest
+		failReason int
+		comment    string
+	}
+
+	now := timeutil.Now()
+	maxLength := time.Hour * 24 * time.Duration(e.cfg.BookingRules.MaxBookingLengthDays)
+
+	testCases := []testCase{
+		{
+			req: models.BookingRequest{
+				CabinID:   "a4b4f496-767e-423e-9816-83b71e1cfa89",
+				StartDate: now,
+				EndDate:   now.Add(maxLength),
+				DryRun:    false,
+			},
+			status:  http.StatusOK,
+			comment: "Should be allowed",
+		},
+		{
+			req: models.BookingRequest{
+				CabinID:   "63e71fef-0037-451f-b731-27249c0164d9",
+				StartDate: now,
+				EndDate:   now.Add(maxLength + 2*24*time.Hour),
+				DryRun:    false,
+			},
+			status:     http.StatusForbidden,
+			failReason: int(models.ErrBookingToLong),
+			comment:    "Should fail as booking is too long",
+		},
+		{
+			req: models.BookingRequest{
+				CabinID:   "63e71fef-0037-451f-b731-27249c0164d9",
+				StartDate: now.AddDate(0, int(e.cfg.BookingRules.MustStartWithinMonths), 1),
+				EndDate:   now.AddDate(0, int(e.cfg.BookingRules.MustStartWithinMonths), 3),
+				DryRun:    false,
+			},
+			status:     http.StatusForbidden,
+			failReason: int(models.ErrBookingToFarInFuture),
+			comment:    "Should fail as start date is to far in the future",
+		},
+		{
+			req: models.BookingRequest{
+				CabinID:   "63e71fef-0037-451f-b731-27249c0164d9",
+				StartDate: now,
+				EndDate:   now.Add(maxLength),
+				DryRun:    false,
+			},
+			status:  http.StatusOK,
+			comment: "Should be allowed",
+		},
+		{
+			req: models.BookingRequest{
+				CabinID:   "2aa15162-2443-48f1-9b8f-6314f90faf9a",
+				StartDate: now,
+				EndDate:   now.Add(maxLength),
+				DryRun:    false,
+			},
+			status:     http.StatusForbidden,
+			failReason: int(models.ErrMaxBookingsExceeded),
+			comment:    "Should fail as user has to many bookings",
+		},
+	}
+
+	authenticator := authtest.NewAuthenticator(e.cfg.JWT)
+
+	for i, tc := range testCases {
+		path := fmt.Sprintf("/v1/bookings?dry-run=%v", tc.req.DryRun)
+		req, _ := rpc.NewClient(time.Second).CreateRequest(http.MethodPost, path, tc.req)
+		authenticator.Authenticate(req, user.ID, authutil.UserRole)
+		res := testutil.PerformRequest(e.router, req)
+		assert.Equal(tc.status, res.Code, "Test Case #%d failed, wrong status code: %s", i+1, tc.comment)
+		if tc.status > 299 { // status not in success range
+			vilationStr := res.Header().Get("X-Booking-Rule-Violation")
+			violation, err := strconv.Atoi(vilationStr)
+			assert.NoError(err, "Test Case #%d failed, unexpected error: %s", i+1, tc.comment)
+			assert.Equal(tc.failReason, violation, "Test Case #%d failed, wrong booking violation: %s", i+1, tc.comment)
+		}
+	}
 }
 
 func TestCreateBooking_invalid(t *testing.T) {
@@ -391,7 +504,16 @@ func newTestEnv() testEnv {
 	userRepo := repository.NewUserRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
 
+	cfg := config.Config{
+		JWT: jwt.Credentials{
+			Issuer: "bolesta-booking/backend",
+			Secret: id.New(),
+		},
+		BookingRules: models.DefaultBookingRules(),
+	}
+
 	svc := &service.BookingService{
+		Rules:       cfg.BookingRules,
 		BookingRepo: bookingRepo,
 		CabinRepo:   cabinRepo,
 		UserRepo:    userRepo,
@@ -400,13 +522,6 @@ func newTestEnv() testEnv {
 	r := httputil.NewRouter("backend", func() error {
 		return nil
 	})
-
-	cfg := config.Config{
-		JWT: jwt.Credentials{
-			Issuer: "bolesta-booking/backend",
-			Secret: id.New(),
-		},
-	}
 
 	bookings.AttachController(svc, r, cfg)
 	return testEnv{

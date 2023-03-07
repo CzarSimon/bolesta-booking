@@ -1,9 +1,7 @@
 package config
 
 import (
-	"os"
-	"strconv"
-
+	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/httputil/dbutil"
 	"github.com/CzarSimon/httputil/environ"
 	"github.com/CzarSimon/httputil/jwt"
@@ -19,6 +17,7 @@ type Config struct {
 	Port              string
 	EnableCreateUsers bool
 	JWT               jwt.Credentials
+	BookingRules      models.BookingRules
 }
 
 // GetConfig reads, parses and marshalls the applications configuration.
@@ -30,26 +29,23 @@ func GetConfig() Config {
 		MigrationsPath:    environ.Get("MIGRATIONS_PATH", "/etc/bolesta-booking/backend/db/sqlite"),
 		Port:              environ.Get("PORT", "8080"),
 		EnableCreateUsers: getBoolEnvVar("ENABLE_CREATE_USERS", false),
+		BookingRules:      getBookingRules(),
 	}
-}
-
-func getBoolEnvVar(key string, defaultValue bool) bool {
-	str := os.Getenv(key)
-	if str == "" {
-		return defaultValue
-	}
-
-	val, err := strconv.ParseBool(str)
-	if err != nil {
-		log.Fatalf("failed to parse %s as boolean. Key=%s: %w", str, key, err)
-	}
-
-	return val
 }
 
 func getJWTCredentials() jwt.Credentials {
 	return jwt.Credentials{
 		Issuer: environ.Get("JWT_ISSUER", "bolesta-booking"),
 		Secret: environ.MustGet("JWT_SECRET"),
+	}
+}
+
+func getBookingRules() models.BookingRules {
+	d := models.DefaultBookingRules()
+
+	return models.BookingRules{
+		MaxBookingLengthDays:  getIntEnvVar("BOOKING_RULE_MAX_LENGTH_IN_DAYS", d.MaxBookingLengthDays),
+		MaxActiveBookings:     getIntEnvVar("BOOKING_RULE_MAX_ACTIVE_BOOKINGS", d.MaxActiveBookings),
+		MustStartWithinMonths: getIntEnvVar("BOOKING_RULE_MUST_START_WITHIN_MONTHS", d.MustStartWithinMonths),
 	}
 }

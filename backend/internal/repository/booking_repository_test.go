@@ -269,32 +269,41 @@ func Test_bookingRepo_FindByFilter(t *testing.T) {
 		assert.NoError(err)
 	}
 
-	res, err := bookingRepo.FindByFilter(ctx, models.BookingFilter{})
+	f := models.BookingFilter{}
+	res, err := bookingRepo.FindByFilter(ctx, f)
 	assert.NoError(err)
 	assert.Len(res, 3)
 	assertBookings(t, res, bookings...)
+	refs, err := bookingRepo.FindRefsByFilter(ctx, f)
+	assert.NoError(err)
+	assert.Len(refs, 3)
 
-	res, err = bookingRepo.FindByFilter(ctx, models.BookingFilter{
-		CabinID: cabin1.ID,
-	})
+	f = models.BookingFilter{CabinID: cabin1.ID}
+	res, err = bookingRepo.FindByFilter(ctx, f)
 	assert.NoError(err)
 	assert.Len(res, 2)
 	assertBookings(t, res, bookings[0], bookings[1])
+	refs, err = bookingRepo.FindRefsByFilter(ctx, f)
+	assert.NoError(err)
+	assert.Len(refs, 2)
 
-	res, err = bookingRepo.FindByFilter(ctx, models.BookingFilter{
-		UserID: user1.ID,
-	})
+	f = models.BookingFilter{UserID: user1.ID}
+	res, err = bookingRepo.FindByFilter(ctx, f)
 	assert.NoError(err)
 	assert.Len(res, 2)
 	assertBookings(t, res, bookings[0], bookings[2])
+	refs, err = bookingRepo.FindRefsByFilter(ctx, f)
+	assert.NoError(err)
+	assert.Len(refs, 2)
 
-	res, err = bookingRepo.FindByFilter(ctx, models.BookingFilter{
-		CabinID: cabin1.ID,
-		UserID:  user1.ID,
-	})
+	f = models.BookingFilter{CabinID: cabin1.ID, UserID: user1.ID}
+	res, err = bookingRepo.FindByFilter(ctx, f)
 	assert.NoError(err)
 	assert.Len(res, 1)
 	assertBookings(t, res, bookings[0])
+	refs, err = bookingRepo.FindRefsByFilter(ctx, f)
+	assert.NoError(err)
+	assert.Len(refs, 1)
 
 	res, err = bookingRepo.FindByFilter(ctx, models.BookingFilter{
 		CabinID: cabin2.ID,

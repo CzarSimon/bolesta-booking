@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/httputil"
@@ -16,6 +15,7 @@ type BookingRepository interface {
 	Save(ctx context.Context, booking models.Booking) error
 	Find(ctx context.Context, id string) (models.Booking, bool, error)
 	FindByFilter(ctx context.Context, f models.BookingFilter) ([]models.Booking, error)
+	FindRefsByFilter(ctx context.Context, f models.BookingFilter) ([]models.BookingRef, error)
 	Delete(ctx context.Context, id string) error
 }
 
@@ -23,28 +23,6 @@ func NewBookingRepository(db *sql.DB) BookingRepository {
 	return &bookingRepo{
 		db:       db,
 		userRepo: NewUserRepository(db),
-	}
-}
-
-type bookingRef struct {
-	id        string
-	startDate time.Time
-	endDate   time.Time
-	createdAt time.Time
-	updatedAt time.Time
-	cabinID   string
-	userID    string
-}
-
-func (b bookingRef) Booking(cabin models.Cabin, user models.User) models.Booking {
-	return models.Booking{
-		ID:        b.id,
-		StartDate: b.startDate,
-		EndDate:   b.endDate,
-		CreatedAt: b.createdAt,
-		UpdatedAt: b.updatedAt,
-		Cabin:     cabin,
-		User:      user,
 	}
 }
 
@@ -166,20 +144,20 @@ func (r *bookingRepo) Find(ctx context.Context, id string) (models.Booking, bool
 		return models.Booking{}, exits, err
 	}
 
-	cabin, exits, err := findCabin(ctx, tx, ref.cabinID)
+	cabin, exits, err := findCabin(ctx, tx, ref.CabinID)
 	if err != nil {
 		return models.Booking{}, exits, err
 	}
 	if !exits {
-		return models.Booking{}, exits, fmt.Errorf("failed to find referenced Cabin(id=%s) from Booking(id=%s)", ref.cabinID, ref.id)
+		return models.Booking{}, exits, fmt.Errorf("failed to find referenced Cabin(id=%s) from Booking(id=%s)", ref.CabinID, ref.ID)
 	}
 
-	user, exits, err := findUser(ctx, tx, ref.userID)
+	user, exits, err := findUser(ctx, tx, ref.UserID)
 	if err != nil {
 		return models.Booking{}, exits, err
 	}
 	if !exits {
-		return models.Booking{}, exits, fmt.Errorf("failed to find referenced User(id=%s) from Booking(id=%s)", ref.userID, ref.id)
+		return models.Booking{}, exits, fmt.Errorf("failed to find referenced User(id=%s) from Booking(id=%s)", ref.UserID, ref.ID)
 	}
 
 	return ref.Booking(cabin, user), true, nil
@@ -199,15 +177,15 @@ const findBookingRefByIDQuery = `
 	WHERE
 		id = ?`
 
-func findBookingRef(ctx context.Context, tx *sql.Tx, id string) (bookingRef, bool, error) {
-	var b bookingRef
-	err := tx.QueryRowContext(ctx, findBookingRefByIDQuery, id).Scan(&b.id, &b.startDate, &b.endDate, &b.createdAt, &b.updatedAt, &b.cabinID, &b.userID)
+func findBookingRef(ctx context.Context, tx *sql.Tx, id string) (models.BookingRef, bool, error) {
+	var b models.BookingRef
+	err := tx.QueryRowContext(ctx, findBookingRefByIDQuery, id).Scan(&b.ID, &b.StartDate, &b.EndDate, &b.CreatedAt, &b.UpdatedAt, &b.CabinID, &b.UserID)
 	if err == sql.ErrNoRows {
-		return bookingRef{}, false, nil
+		return models.BookingRef{}, false, nil
 	}
 
 	if err != nil {
-		return bookingRef{}, false, fmt.Errorf("failed to query Booking(id=%s): %w", id, err)
+		return models.BookingRef{}, false, fmt.Errorf("failed to query Booking(id=%s): %w", id, err)
 	}
 
 	return b, true, nil
@@ -238,7 +216,22 @@ func (r *bookingRepo) FindByFilter(ctx context.Context, f models.BookingFilter) 
 	return mapRefsToBookings(refs, cabins, users)
 }
 
-func findBookingRefsByFilter(ctx context.Context, tx *sql.Tx, f models.BookingFilter) ([]bookingRef, error) {
+func (r *bookingRepo) FindRefsByFilter(ctx context.Context, f models.BookingFilter) ([]models.BookingRef, error) {
+	tx, err := readOnlyTx(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	defer dbutil.Rollback(tx)
+
+	refs, err := findBookingRefsByFilter(ctx, tx, f)
+	if err != nil {
+		return nil, err
+	}
+
+	return refs, nil
+}
+
+func findBookingRefsByFilter(ctx context.Context, tx *sql.Tx, f models.BookingFilter) ([]models.BookingRef, error) {
 	query, values := createBookingRefsFilterQuery(f)
 	rows, err := tx.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -246,10 +239,10 @@ func findBookingRefsByFilter(ctx context.Context, tx *sql.Tx, f models.BookingFi
 	}
 	defer rows.Close()
 
-	refs := make([]bookingRef, 0)
-	var b bookingRef
+	refs := make([]models.BookingRef, 0)
+	var b models.BookingRef
 	for rows.Next() {
-		err = rows.Scan(&b.id, &b.startDate, &b.endDate, &b.createdAt, &b.updatedAt, &b.cabinID, &b.userID)
+		err = rows.Scan(&b.ID, &b.StartDate, &b.EndDate, &b.CreatedAt, &b.UpdatedAt, &b.CabinID, &b.UserID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan booking: %w", err)
 		}
@@ -293,17 +286,17 @@ func createBookingRefsFilterQuery(f models.BookingFilter) (string, []interface{}
 	return fmt.Sprintf("%s WHERE %s", baseQuery, whereClause), values
 }
 
-func mapRefsToBookings(refs []bookingRef, cabins map[string]models.Cabin, users map[string]models.User) ([]models.Booking, error) {
+func mapRefsToBookings(refs []models.BookingRef, cabins map[string]models.Cabin, users map[string]models.User) ([]models.Booking, error) {
 	bookings := make([]models.Booking, 0, len(refs))
 	for _, ref := range refs {
-		cabin, ok := cabins[ref.cabinID]
+		cabin, ok := cabins[ref.CabinID]
 		if !ok {
-			return nil, fmt.Errorf("Could not find Cabin(id=%s) referenced in Booking(id=%s)", ref.cabinID, ref.id)
+			return nil, fmt.Errorf("Could not find Cabin(id=%s) referenced in Booking(id=%s)", ref.CabinID, ref.ID)
 		}
 
-		user, ok := users[ref.userID]
+		user, ok := users[ref.UserID]
 		if !ok {
-			return nil, fmt.Errorf("Could not find User(id=%s) referenced in Booking(id=%s)", ref.userID, ref.id)
+			return nil, fmt.Errorf("Could not find User(id=%s) referenced in Booking(id=%s)", ref.UserID, ref.ID)
 		}
 
 		bookings = append(bookings, ref.Booking(cabin, user))
@@ -312,12 +305,12 @@ func mapRefsToBookings(refs []bookingRef, cabins map[string]models.Cabin, users 
 	return bookings, nil
 }
 
-func mapRefsToUniqueCabinIDs(refs []bookingRef) []string {
+func mapRefsToUniqueCabinIDs(refs []models.BookingRef) []string {
 	ids := make([]string, 0)
 	unique := make(map[string]bool)
 
 	for _, ref := range refs {
-		id := ref.cabinID
+		id := ref.CabinID
 		_, present := unique[id]
 		if !present {
 			unique[id] = true
@@ -328,12 +321,12 @@ func mapRefsToUniqueCabinIDs(refs []bookingRef) []string {
 	return ids
 }
 
-func mapRefsToUniqueUserIDs(refs []bookingRef) []string {
+func mapRefsToUniqueUserIDs(refs []models.BookingRef) []string {
 	ids := make([]string, 0)
 	unique := make(map[string]bool)
 
 	for _, ref := range refs {
-		id := ref.userID
+		id := ref.UserID
 		_, present := unique[id]
 		if !present {
 			unique[id] = true

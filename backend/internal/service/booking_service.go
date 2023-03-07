@@ -6,9 +6,14 @@ import (
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/repository"
 	"github.com/CzarSimon/httputil"
+	"github.com/CzarSimon/httputil/logger"
+	"github.com/CzarSimon/httputil/timeutil"
 )
 
+var log = logger.GetDefaultLogger("internal/service")
+
 type BookingService struct {
+	Rules       models.BookingRules
 	BookingRepo repository.BookingRepository
 	UserRepo    repository.UserRepository
 	CabinRepo   repository.CabinRepository
@@ -43,6 +48,14 @@ func (s *BookingService) CreateBooking(ctx context.Context, req models.BookingRe
 	}
 
 	booking := models.NewBooking(cabin, user, req.StartDate, req.EndDate)
+	err = s.isBookingAllowed(ctx, booking)
+	if err != nil {
+		return models.Booking{}, err
+	}
+
+	if req.DryRun {
+		return booking, nil
+	}
 
 	err = s.BookingRepo.Save(ctx, booking)
 	if err != nil {
@@ -107,4 +120,35 @@ func (s *BookingService) mustGetBooking(ctx context.Context, bookingID string) (
 	}
 
 	return booking, nil
+}
+
+func (s *BookingService) isBookingAllowed(ctx context.Context, b models.Booking) error {
+	currentBookings, err := s.getNoCurrentBookingsForUser(ctx, b.User)
+	if err != nil {
+		return err
+	}
+
+	err = s.Rules.Allowed(b, currentBookings)
+	if err != nil {
+		return httputil.ForbiddenError(err)
+	}
+
+	return nil
+}
+
+func (s *BookingService) getNoCurrentBookingsForUser(ctx context.Context, u models.User) (int, error) {
+	existing, err := s.BookingRepo.FindRefsByFilter(ctx, models.BookingFilter{UserID: u.ID})
+	if err != nil {
+		return 0, err
+	}
+
+	futureBookings := 0
+	now := timeutil.Now()
+	for _, b := range existing {
+		if b.EndDate.After(now) {
+			futureBookings++
+		}
+	}
+
+	return futureBookings, nil
 }

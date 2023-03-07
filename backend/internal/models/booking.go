@@ -8,6 +8,32 @@ import (
 	"github.com/CzarSimon/httputil/timeutil"
 )
 
+// BookingRuleViloation type of vialotion
+type BookingRuleViloation int
+
+const (
+	bookingOk BookingRuleViloation = iota
+	ErrInvalidBooking
+	ErrBookingToLong
+	ErrBookingToFarInFuture
+	ErrMaxBookingsExceeded
+)
+
+func (v BookingRuleViloation) Error() string {
+	switch v {
+	case ErrInvalidBooking:
+		return "ErrInvalidBooking"
+	case ErrBookingToLong:
+		return "ErrBookingToLong"
+	case ErrBookingToFarInFuture:
+		return "ErrBookingToFarInFuture"
+	case ErrMaxBookingsExceeded:
+		return "ErrMaxBookingsExceeded"
+	default:
+		return "Unkown"
+	}
+}
+
 // Booking booking of a cabin by a user with a specificed start and end date
 type Booking struct {
 	ID        string    `json:"id"`
@@ -41,30 +67,68 @@ type BookingRequest struct {
 	StartDate time.Time `json:"startDate"`
 	EndDate   time.Time `json:"endDate"`
 	UserID    string    `json:"userId"`
+	DryRun    bool
 }
 
 func (r BookingRequest) Valid() error {
 	if r.CabinID == "" {
-		return fmt.Errorf("CabinID cannot be empty")
+		return ErrInvalidBooking
 	}
 
 	if r.UserID == "" {
-		return fmt.Errorf("UserID cannot be empty")
+		return ErrInvalidBooking
 	}
 
 	if r.StartDate.After(r.EndDate) {
-		return fmt.Errorf("StartDate must be before EndDate")
+		return ErrInvalidBooking
 	}
 
 	if r.EndDate.Before(timeutil.Now()) {
-		return fmt.Errorf("EndDate must be in the future")
+		return ErrInvalidBooking
 	}
 
 	return nil
 }
 
 func (r BookingRequest) String() string {
-	return fmt.Sprintf("BookingRequest(cabinId=%s, userId=%s, startDate=%v, endDate=%v)", r.CabinID, r.UserID, r.StartDate, r.EndDate)
+	return fmt.Sprintf("BookingRequest(cabinId=%s, userId=%s, startDate=%v, endDate=%v, dryRun=%v)", r.CabinID, r.UserID, r.StartDate, r.EndDate, r.DryRun)
+}
+
+// BookingRules rules governing if a booking is allowed
+type BookingRules struct {
+	MaxBookingLengthDays  int
+	MaxActiveBookings     int
+	MustStartWithinMonths int
+}
+
+func (r BookingRules) Allowed(b Booking, currentBookings int) error {
+	maxEndDate := b.StartDate.Add(r.maxLength())
+	if b.EndDate.After(maxEndDate) {
+		return ErrBookingToLong
+	}
+
+	maxStartDate := timeutil.Now().AddDate(0, r.MustStartWithinMonths, 0)
+	if b.StartDate.After(maxStartDate) {
+		return ErrBookingToFarInFuture
+	}
+
+	if currentBookings >= r.MaxActiveBookings {
+		return ErrMaxBookingsExceeded
+	}
+
+	return nil
+}
+
+func (r BookingRules) maxLength() time.Duration {
+	return time.Hour * 24 * time.Duration(r.MaxBookingLengthDays)
+}
+
+func DefaultBookingRules() BookingRules {
+	return BookingRules{
+		MaxBookingLengthDays:  7,
+		MaxActiveBookings:     2,
+		MustStartWithinMonths: 3,
+	}
 }
 
 // DeleteBookingRequest request to delete a booking
@@ -85,4 +149,31 @@ type BookingFilter struct {
 
 func (f BookingFilter) String() string {
 	return fmt.Sprintf("BookingFilter(cabinId=%s, userId=%s)", f.CabinID, f.UserID)
+}
+
+// BookingRef representation of booking with only references
+type BookingRef struct {
+	ID        string
+	StartDate time.Time
+	EndDate   time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	CabinID   string
+	UserID    string
+}
+
+func (b BookingRef) Booking(cabin Cabin, user User) Booking {
+	return Booking{
+		ID:        b.ID,
+		StartDate: b.StartDate,
+		EndDate:   b.EndDate,
+		CreatedAt: b.CreatedAt,
+		UpdatedAt: b.UpdatedAt,
+		Cabin:     cabin,
+		User:      user,
+	}
+}
+
+func (b BookingRef) String() string {
+	return fmt.Sprintf("BookingRef(id=%s, startDate=%v, endDate=%v, createdAt=%v, updatedAt=%v, cabinId=%s, userId=%s)", b.ID, b.StartDate, b.EndDate, b.CreatedAt, b.UpdatedAt, b.CabinID, b.UserID)
 }
