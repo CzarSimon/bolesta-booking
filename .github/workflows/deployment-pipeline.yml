@@ -69,6 +69,14 @@ jobs:
       - security-scan
     steps:
       - uses: actions/checkout@v2
+      - name: upload env creation file
+        uses: burnett01/rsync-deployments@5.2.1
+        with:
+          path: "./infrastructure/create-env-file.sh"
+          remote_path: /home/cicd
+          remote_host: ${{ env.SERVER_HOST }}
+          remote_user: cicd
+          remote_key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
       - name: upload compose file
         uses: burnett01/rsync-deployments@5.2.1
         with:
@@ -114,12 +122,17 @@ jobs:
       - rsync-deployment-files
       - build-and-upload-frontend
     steps:
-      - name: executing remote ssh commands using ssh key
+      - name: create env and start containers
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ env.SERVER_HOST }}
           username: cicd
           key: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
           script: |
+            chmod 700 create-env-file.sh
+            LITESTREAM_ACCESS_KEY_ID=${{ secrets.SCW_FE_UPLOAD_ACCESS_KEY }} \
+              LITESTREAM_ACCESS_KEY_SECRET=${{ secrets.SCW_FE_UPLOAD_SECRET_KEY }} \
+              ./create-env-file.sh
+            chmod 400 .env
             docker-compose pull
-            docker-compose up -d
+            docker-compose --env-file=.env up -d

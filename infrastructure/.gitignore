@@ -1,2 +1,4 @@
 .terraform
+.env
 .terraform.lock.hcl
+.env.bak

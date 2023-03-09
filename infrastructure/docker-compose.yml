@@ -10,13 +10,13 @@ volumes:
 
 services:
   backend:
-    image: ghcr.io/czarsimon/bolesta-booking/backend:3.0.0
+    image: ghcr.io/czarsimon/bolesta-booking/backend:3.1.0
     volumes:
       - backend-db:/var/bolesta-booking
     environment:
       - DB_FILENAME=/var/bolesta-booking/db.sql
       - ENABLE_CREATE_USERS=true
-      - JWT_SECRET=this-is-temporary-secret
+      - JWT_SECRET=${JWT_SECRET}
     networks:
       - application-network
       - monitoring-network
@@ -29,3 +29,5 @@ services:
       JAEGER_DISABLED: "true"
     networks:
       - monitoring-network
+    ports:
+      - "8081:8080"
