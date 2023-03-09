@@ -23,7 +23,11 @@ provider "scaleway" {
 
 resource "scaleway_object_bucket" "frontend" {
   name = "bolesta-booking-frontend"
-  acl  = "public-read"
+}
+
+resource "scaleway_object_bucket_acl" "frontend_acl" {
+  bucket = scaleway_object_bucket.frontend.name
+  acl    = "public-read"
 }
 
 resource "scaleway_object_bucket_website_configuration" "frontend_website" {
@@ -34,6 +38,15 @@ resource "scaleway_object_bucket_website_configuration" "frontend_website" {
   error_document {
     key = "index.html"
   }
+}
+
+resource "scaleway_object_bucket" "db_backup" {
+  name = "bolesta-booking-db-backup"
+}
+
+resource "scaleway_object_bucket_acl" "db_backup_acl" {
+  bucket = scaleway_object_bucket.db_backup.name
+  acl    = "private"
 }
 
 resource "scaleway_instance_ip" "server_ip" {}
