@@ -2,3 +2,4 @@
 .env
 .terraform.lock.hcl
 .env.bak
+inital-users.json
