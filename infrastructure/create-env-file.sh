@@ -22,7 +22,7 @@ function create_var_if_not_exists() {
 
 touch .env
 
-create_var_if_not_exists "JWT_SECRET" "$(openssl rand 32 -hex)" false
+create_var_if_not_exists "JWT_SECRET" "$(openssl rand -hex 32)" false
 create_var_if_not_exists "LITESTREAM_ACCESS_KEY_ID" "$LITESTREAM_ACCESS_KEY_ID" true
 create_var_if_not_exists "LITESTREAM_ACCESS_KEY_SECRET" "$LITESTREAM_ACCESS_KEY_SECRET" true
 

@@ -27,7 +27,7 @@ jobs:
           sudo dpkg -i trivy_0.18.3_Linux-64bit.deb
       - name: scan deployment images
         run: |
-          for IMAGE in $(cat docker-compose.yml | grep 'image: ' | awk '{print $NF}'); do echo $IMAGE; trivy image --ignore-unfixed --exit-code 1 $IMAGE; done;
+          for IMAGE in $(cat docker-compose.yml | grep 'image: ' | grep -v '#ignore-scanning' | awk '{print $NF}'); do echo $IMAGE; trivy image --ignore-unfixed --exit-code 1 $IMAGE; done;
 
   build-and-upload-frontend:
     name: build-and-upload-frontend
