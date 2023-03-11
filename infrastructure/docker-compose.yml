@@ -4,6 +4,7 @@ networks:
   monitoring-network:
     name: monitoring-network
 
+
 volumes:
   backend-db:
 
@@ -15,7 +16,7 @@ services:
       - backend-db:/var/bolesta-booking
     environment:
       - DB_FILENAME=/var/bolesta-booking/db.sql
-      - ENABLE_CREATE_USERS=false
+      - ENABLE_CREATE_USERS=true
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - application-network
@@ -31,3 +32,12 @@ services:
       - monitoring-network
     ports:
       - "8081:8080"
+
+  litestream:
+    image: ghcr.io/czarsimon/bolesta-booking/litestream:1.0.0 #ignore-scanning
+    environment:
+      - AWS_ACCESS_KEY_ID=${LITESTREAM_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${LITESTREAM_ACCESS_KEY_SECRET}
+    volumes:
+      - backend-db:/var/bolesta-booking
+    command: replicate
