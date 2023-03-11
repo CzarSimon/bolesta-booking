@@ -15,7 +15,7 @@ services:
       - backend-db:/var/bolesta-booking
     environment:
       - DB_FILENAME=/var/bolesta-booking/db.sql
-      - ENABLE_CREATE_USERS=true
+      - ENABLE_CREATE_USERS=false
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - application-network
