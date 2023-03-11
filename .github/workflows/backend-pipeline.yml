@@ -38,7 +38,9 @@ jobs:
       - name: Check code style
         run: go vet ./...
       - name: Test
-        run: go test ./...
+        run: |
+          go clean -testcache
+          go test ./...
 
   security-scans:
     name: security-scans
