@@ -1,0 +1,50 @@
+name: litestream-pipeline
+
+defaults:
+  run:
+    working-directory: infrastructure/litestream
+
+on:
+  push:
+    paths:
+      - infrastructure/litestream/**
+      - .github/workflows/litestream-pipeline.yml
+
+jobs:
+  parse-version:
+    name: parse-version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: parse
+        name: Parse version info
+        run: |
+          VERSION=$(cat package.json | jq .version --raw-output)
+          echo "::set-output name=version::$VERSION"
+
+  build-image:
+    name: build-image
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - parse-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+      - name: Docker build
+        run: |
+          echo "Package version: ${{needs.parse-version.outputs.package-name}}"
+          docker build \
+            -t ghcr.io/czarsimon/bolesta-booking/litestream:${{needs.parse-version.outputs.version}} \
+            --label git-commit="$(git rev-parse HEAD)" \
+            --label build-date="$(date -u)" \
+            --label commiter-name="$(git show -s --format='%an')" \
+            --label commiter-email="$(git show -s --format='%ae')" \
+            .
+      - name: Docker push
+        run: |
+          docker login https://ghcr.io --username $GITHUB_ACTOR --password ${{ secrets.GITHUB_TOKEN }}
+          docker push ghcr.io/czarsimon/bolesta-booking/litestream:${{needs.parse-version.outputs.version}}

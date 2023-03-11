@@ -1,0 +1,8 @@
+dbs:
+  - path: /var/bolesta-booking/db.sql
+    replicas:
+      - type: s3
+        bucket: bolesta-booking-db-backup
+        path: db.sql
+        region: fr-par
+        endpoint: https://s3.fr-par.scw.cloud
