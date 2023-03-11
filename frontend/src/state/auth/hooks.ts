@@ -7,7 +7,7 @@ import { AUTH_TOKEN_KEY, CURRENT_USER_KEY } from "../../constants";
 import { removeHeader, setHeader } from "../../api/httpclient";
 
 interface UseAuthResult {
-  login: (req: LoginRequest) => void;
+  login: (req: LoginRequest) => Promise<void>;
   user?: User;
   authenticated: boolean;
   authenticate: (user: User) => void;

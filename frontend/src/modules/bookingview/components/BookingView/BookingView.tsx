@@ -8,17 +8,17 @@ import {
   Result,
   Success,
   Failure,
-  Booking,
+  BookingResult,
 } from "../../../../types";
 import { BookingResultModal } from "../BookingResultModal";
 import { ItemSelect } from "../../../../components/ItemSelect";
+import { NavTitle } from "../../../../components/NavTitle";
 
 import styles from "./BookingView.module.css";
-import { NavTitle } from "../../../../components/NavTitle";
 
 interface Props {
   cabins: Cabin[];
-  handleBookingRequest: (req: BookingRequest) => Promise<Booking>;
+  handleBookingRequest: (req: BookingRequest) => Promise<BookingResult>;
 }
 
 export function BookingView({ cabins, handleBookingRequest }: Props) {
@@ -26,7 +26,8 @@ export function BookingView({ cabins, handleBookingRequest }: Props) {
   const [from, setFrom] = useState<Optional<Date>>();
   const [to, setTo] = useState<Optional<Date>>();
   const [err, setErr] = useState<Optional<string>>();
-  const [success, setSuccess] = useState<Optional<boolean>>();
+  const [bookingResult, setBookingResult] =
+    useState<Optional<BookingResult>>(undefined);
 
   const updateDates = (_: any, dates: [string, string]) => {
     const [fromStr, toStr] = dates;
@@ -34,16 +35,14 @@ export function BookingView({ cabins, handleBookingRequest }: Props) {
     setTo(new Date(toStr));
   };
 
+  const requestBooking = async (req: BookingRequest) => {
+    const res = await handleBookingRequest(req);
+    setBookingResult(res);
+  };
+
   const onSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
-    parseBookingRequest(cabinId, to, from)
-      .then((r) => {
-        setErr(undefined);
-        handleBookingRequest(r)
-          .then((_) => setSuccess(true))
-          .catch((_) => setSuccess(false));
-      })
-      .catch((e) => setErr(e));
+    parseBookingRequest(cabinId, to, from).then(requestBooking).catch(setErr);
   };
 
   return (
@@ -64,10 +63,10 @@ export function BookingView({ cabins, handleBookingRequest }: Props) {
           inputReadOnly
         />
         <ErrorText error={err} />
-        {success !== undefined ? (
+        {bookingResult !== undefined ? (
           <BookingResultModal
-            success={success}
-            onClose={() => setSuccess(undefined)}
+            result={bookingResult}
+            onClose={() => setBookingResult(undefined)}
           />
         ) : null}
         <Button

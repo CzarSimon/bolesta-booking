@@ -1,5 +1,11 @@
 export type Optional<T> = T | undefined;
 
+export interface RequestError {
+  id: string;
+  status: number;
+  message: string;
+}
+
 export interface Cabin {
   id: string;
   name: string;
@@ -29,6 +35,12 @@ export interface BookingRequest {
   cabinId: string;
   startDate: Date;
   endDate: Date;
+}
+
+export interface BookingResult {
+  success: boolean;
+  bookingId?: string;
+  errorId?: number;
 }
 
 export interface BookingFilter {
@@ -94,4 +106,8 @@ export function Success<T, E>(value: T): Result<T, E> {
 
 export function Failure<T, E>(err: E): Result<T, E> {
   return new Result<T, E>(undefined, err);
+}
+
+export function isRequestError(o: any): o is RequestError {
+  return "status" in o;
 }

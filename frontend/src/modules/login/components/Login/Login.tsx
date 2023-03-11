@@ -7,12 +7,14 @@ import {
   Optional,
   Result,
   Success,
+  RequestError,
 } from "../../../../types";
+import { STATUS } from "../../../../constants";
 
 import styles from "./Login.module.css";
 
 interface Props {
-  submit: (req: LoginRequest) => void;
+  submit: (req: LoginRequest) => Promise<void>;
 }
 
 export function Login({ submit }: Props) {
@@ -28,10 +30,21 @@ export function Login({ submit }: Props) {
     setPassword(e.target.value);
   };
 
+  const requestLogin = (req: LoginRequest) => {
+    submit(req).catch((error) => {
+      switch (parseRequestError(error).status) {
+        case STATUS.UNAUTHORIZED:
+          setErr("Fel användarnamn eller lösenord");
+          return;
+        default:
+          setErr("Tekniskt fel");
+          return;
+      }
+    });
+  };
+
   const onSubmit = () => {
-    parseLoginRequest(email, password)
-      .then((req) => submit(req))
-      .catch((e) => setErr(e));
+    parseLoginRequest(email, password).then(requestLogin).catch(setErr);
   };
 
   return (
@@ -72,4 +85,22 @@ function parseLoginRequest(
     email,
     password,
   });
+}
+
+function parseRequestError(err: any): RequestError {
+  const defaultError: RequestError = {
+    id: "-",
+    status: STATUS.INTERNAL_SERVER_ERROR,
+    message: "Unkown error",
+  };
+
+  if (!("message" in err)) {
+    return defaultError;
+  }
+
+  try {
+    return JSON.parse(err.message);
+  } catch (error) {
+    return defaultError;
+  }
 }

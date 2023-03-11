@@ -12,6 +12,10 @@ export async function requestLogin(
       body: req,
     });
 
+  if (error) {
+    throw error;
+  }
+
   if (!body) {
     throw wrapAndLogError(
       `failed to login user(email=${req.email})`,

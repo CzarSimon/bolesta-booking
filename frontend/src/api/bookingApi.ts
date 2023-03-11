@@ -1,23 +1,40 @@
 import { BASE_URL } from "../constants";
-import { BookingRequest, Booking, BookingFilter, StatusBody } from "../types";
+import {
+  BookingRequest,
+  Booking,
+  BookingFilter,
+  StatusBody,
+  BookingResult,
+} from "../types";
 import { httpclient } from "./httpclient";
 import { wrapAndLogError } from "./util";
 
-export async function createBooking(req: BookingRequest): Promise<Booking> {
+export async function createBooking(
+  req: BookingRequest,
+  dryRun: boolean
+): Promise<BookingResult> {
   const { body, error, metadata } = await httpclient.post<Booking>({
-    url: `${BASE_URL}/v1/bookings`,
+    url: `${BASE_URL}/v1/bookings?dry-run=${dryRun}`,
     body: req,
   });
 
+  const BOOKING_VIOLATION_KEY = "x-booking-rule-violation";
+
+  if (metadata.status === 403 && metadata.headers[BOOKING_VIOLATION_KEY]) {
+    const violation = parseInt(metadata.headers[BOOKING_VIOLATION_KEY]);
+    return { success: false, errorId: violation };
+  }
+
   if (!body) {
-    throw wrapAndLogError(
+    wrapAndLogError(
       `failed to create booking(cabinId=${req.cabinId})`,
       error,
       metadata
     );
+    return { success: false, errorId: 0 };
   }
 
-  return body;
+  return { success: true, bookingId: body?.id };
 }
 
 export async function listBookings(filter?: BookingFilter): Promise<Booking[]> {
