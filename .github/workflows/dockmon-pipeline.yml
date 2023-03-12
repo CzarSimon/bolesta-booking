@@ -38,6 +38,8 @@ jobs:
           scan-ref: "infrastructure/dockmon"
           hide-progress: false
           ignore-unfixed: true
+        env:
+          TRIVY_IGNOREFILE: "infrastructure/dockmon/.trivyignore"
 
   build-image:
     name: build-image
