@@ -11,12 +11,12 @@ volumes:
 
 services:
   backend:
-    image: ghcr.io/czarsimon/bolesta-booking/backend:3.1.0
+    image: ghcr.io/czarsimon/bolesta-booking/backend:3.2.0
     volumes:
       - backend-db:/var/bolesta-booking
     environment:
       - DB_FILENAME=/var/bolesta-booking/db.sql
-      - ENABLE_CREATE_USERS=true
+      - ENABLE_CREATE_USERS=false
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - application-network
@@ -41,3 +41,14 @@ services:
     volumes:
       - backend-db:/var/bolesta-booking
     command: replicate
+
+  dockmon:
+    image: ghcr.io/czarsimon/bolesta-booking/dockmon:1.0.0 #ignore-scanning
+    environment:
+      - DOCKMON_USERNAME=${DOCKMON_USERNAME}
+      - DOCKMON_PASSWORD=${DOCKMON_PASSWORD}
+    networks:
+      - monitoring-network
+    ports:
+      - "7777:7777"
+    command: -storage memory
