@@ -63,6 +63,11 @@ func TestLogin(t *testing.T) {
 	assert.True(jwtUser.HasRole(models.UserRole))
 	assert.Contains(jwtUser.Roles, models.UserRole)
 
+	lr.Email = "Mail@mail.com"
+	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/login", lr)
+	res = testutil.PerformRequest(router, req)
+	assert.Equal(http.StatusOK, res.Code)
+
 	lr.Password = "wrong-password"
 	req, _ = rpc.NewClient(time.Second).CreateRequest(http.MethodPost, "/v1/login", lr)
 	res = testutil.PerformRequest(router, req)

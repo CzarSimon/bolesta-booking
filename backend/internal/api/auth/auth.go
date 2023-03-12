@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/CzarSimon/bolesta-booking/backend/internal/models"
 	"github.com/CzarSimon/bolesta-booking/backend/internal/service"
@@ -50,5 +51,6 @@ func parseCreateUserRequest(c *gin.Context) (models.LoginRequest, error) {
 		return models.LoginRequest{}, err
 	}
 
+	body.Email = strings.ToLower(body.Email)
 	return body, nil
 }
